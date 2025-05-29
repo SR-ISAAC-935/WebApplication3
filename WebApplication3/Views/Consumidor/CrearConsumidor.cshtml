@@ -1,0 +1,86 @@
+﻿@model WebApplication3.Models.DTOs.ListaNegraDTO
+
+@{
+    ViewData["Title"] = "Crear Consumidores";
+}
+
+<h2>Crear Consumidores</h2>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+<form id="consumidoresForm" method="post">
+    <div class="form-group">
+        <label for="NombreConsumidor">Nombre del Consumidor</label>
+        <input type="text" class="form-control" id="NombreConsumidor" placeholder="Ingrese el nombre del consumidor" />
+        <button type="button" class="btn btn-info" id="agregarConsumidor">Agregar Consumidor</button>
+    </div>
+
+    <ul id="consumidoresList">
+        <!-- Lista de consumidores agregados aparecerá aquí -->
+    </ul>
+
+    <button type="submit" class="btn btn-primary">Guardar Consumidores</button>
+</form>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var consumidores = []; // Array para almacenar los consumidores agregados
+
+            // Función para agregar un consumidor a la lista
+            $('#agregarConsumidor').click(function () {
+                var nombreConsumidor = $('#NombreConsumidor').val();
+                if (nombreConsumidor) {
+                    consumidores.push({ NombreConsumidor: nombreConsumidor });
+
+                    // Mostrar en la lista
+                    $('#consumidoresList').append('<li>' + nombreConsumidor + ' <button type="button" class="btn btn-danger btn-sm eliminarConsumidor">Eliminar</button></li>');
+                    $('#NombreConsumidor').val(''); // Limpiar el campo de texto
+                } else {
+                    alert("Por favor, ingrese un nombre de consumidor.");
+                }
+            });
+
+            // Eliminar un consumidor de la lista
+            $('#consumidoresList').on('click', '.eliminarConsumidor', function () {
+                var index = $(this).parent().index();
+                consumidores.splice(index, 1); // Eliminar el consumidor del array
+                $(this).parent().remove(); // Eliminar el elemento de la lista en la vista
+            });
+
+            // Enviar el formulario
+            $('#consumidoresForm').submit(function (event) {
+                event.preventDefault(); // Prevenir el envío tradicional del formulario
+
+                if (consumidores.length > 0) {
+                    // Convertir el array de consumidores a JSON
+                    var consumidoresJson = JSON.stringify(consumidores);
+
+                    // Enviar los datos al controlador
+                    $.ajax({
+                        url: '@Url.Action("CrearConsumidores", "Consumidor")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: consumidoresJson,
+                        success: function (response) {
+                            alert("Consumidores guardados exitosamente");
+                            // Limpiar la lista y el array
+                            $('#consumidoresList').empty();
+                            consumidores = [];
+                        },
+                        error: function () {
+                            alert("Ocurrió un error al guardar los consumidores.");
+                        }
+                    });
+                } else {
+                    alert("Debe agregar al menos un consumidor.");
+                }
+            });
+        });
+    </script>
+}

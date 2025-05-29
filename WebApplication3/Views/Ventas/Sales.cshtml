@@ -1,0 +1,88 @@
+﻿
+@model WebApplication3.Models.DTOs.VentasDTO
+
+@{
+    ViewData["Title"] = "Crear Registro en Lista Negra";
+}
+
+<h2>Venta</h2>
+
+<!-- Mostrar la fecha actual -->
+<p><strong>Fecha: </strong>@DateTime.Now.ToString("dd/MM/yyyy")</p>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+<form asp-action="RealizarVenta" asp-controller="Ventas" method="post">
+    <div class="form-group">
+        <label for="IdConsumidor">Consumidor</label>
+        <input type="text" id="ConsumidorInput" class="form-control" placeholder="Escribe el nombre del consumidor" />
+        <ul id="ConsumidorList" class="list-group" style="display:none;"></ul>
+        <input type="hidden" asp-for="IdConsumidor" id="IdConsumidor" />
+        <span asp-validation-for="IdConsumidor" class="text-danger"></span>
+    </div>
+
+    <!-- Desplegable de productos (autocompletar) -->
+    <div class="form-group">
+        <label for="IdProducto">Producto</label>
+        <input type="text" id="ProductoInput" class="form-control" placeholder="Escribe el nombre del producto" />
+        <ul id="ProductoList" class="list-group" style="display:none;"></ul>
+        <input type="hidden" asp-for="IdProducto" id="IdProducto" />
+        <span asp-validation-for="IdProducto" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="Cantidad">Cantidad</label>
+        <input asp-for="Cantidad" class="form-control" id="Cantidad" />
+        <span asp-validation-for="Cantidad" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="Precio">Precio</label>
+        <input asp-for="Precio" class="form-control" id="Precio" readonly />
+        <span asp-validation-for="Precio" class="text-danger"></span>
+        <input type="checkbox" id="validarPrecio" name="validar" value="Cambia Precio" />
+        <label for="validarPrecio">Permitir modificar el precio</label>
+    </div>
+
+    <!-- Tabla para mostrar los registros temporales -->
+    <h4>Registros en Tabla</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Consumidor</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Deuda</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaRegistros">
+            <!-- Los registros agregados aparecerán aquí -->
+        </tbody>
+    </table>
+
+    <input type="hidden" name="jsonData" id="jsonData" />
+    <button type="button" class="btn btn-primary" id="agregarRegistro">Agregar Registro</button>
+    <button type="button" class="btn btn-primary" id="ListaNegra">Lista Negra</button>
+    <button type="button" class="btn btn-primary" id="Ventas">Vender</button>
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <button type="button" class="btn btn-primary" id="imprimir">Imprimir recibo</button>
+    <button type="button" class="btn btn-primary" id="GuardarRecibo">Guardar Cotizacion</button>
+
+</form>
+
+
+@section Scripts {
+    <script src="~/js/PrediccionConsumidor.js" asp-append-version="true"></script>
+    <script src="~/js/listaNegra.js" asp-append-version="true"></script>
+    <script src="~/js/ManejoDeTablayPost.js" asp-append-version="true"></script>
+    <script src="~/js/impresiones.js" asp-append-version="true"></script>
+    <partial name="_ValidationScriptsPartial" />
+}
+

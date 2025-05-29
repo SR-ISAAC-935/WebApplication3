@@ -1,0 +1,58 @@
+﻿<div class="form-group">
+    <label for="Consumidor">Consumidor</label>
+    <input type="text" id="ConsumidorInput" class="form-control" placeholder="Escribe el nombre del consumidor" />
+    <ul id="ConsumidorList" class="list-group" style="display:none;"></ul>
+    <input type="hidden" id="IdConsumidor" />
+    <span id="IdConsumidorValidation" class="text-danger"></span>
+</div>
+
+<!-- Botón para obtener las facturas pendientes -->
+<button id="btnObtenerFacturas" class="btn btn-primary mt-3">Obtener productos pendientes</button>
+
+<div id="DeudasContainer" style="display: none;">
+    <h3>Deudas</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Deuda</th>
+                <th>Fecha</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody id="DeudasTableBody"></tbody>
+    </table>
+</div>
+
+<div id="DetallesContainer" style="display: none;">
+    <h3>Detalles de la Deuda</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody id="DetallesTableBody"></tbody>
+    </table>
+</div>
+<div id="AbonosContainer" style="display: none;">
+    <h3>Detalles de la Deuda</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Abonado</th>
+                <th>fecha abono</th>
+                <th>Total de la deuda</th>
+            </tr>
+        </thead>
+        <tbody id="AbonosTableBody"></tbody>
+    </table>
+</div>
+@section Scripts {
+
+    <script src="~/js/Gestion.js" asp-append-version="true"></script>
+}

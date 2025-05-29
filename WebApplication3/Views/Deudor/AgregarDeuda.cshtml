@@ -1,0 +1,273 @@
+﻿@model WebApplication3.Models.DTOs.ListaNegraDTO
+
+@{
+    ViewData["Title"] = "Crear Registro en Lista Negra";
+}
+
+<h2>Agregar Materiales a Deudas</h2>
+
+<!-- Mostrar la fecha actual -->
+<p><strong>Fecha: </strong>@DateTime.Now.ToString("dd/MM/yyyy")</p>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Mensaje"]
+    </div>
+}
+
+<form asp-action="Modificar" asp-controller="Deudor" method="post">
+    <div class="form-group">
+        <label for="IdConsumidor">Consumidor</label>
+        <input type="text" id="ConsumidorInput" class="form-control" placeholder="Escribe el nombre del consumidor" />
+        <ul id="ConsumidorList" class="list-group" style="display:none;"></ul>
+        <input type="hidden" asp-for="IdConsumidor" id="IdConsumidor" />
+        <span asp-validation-for="IdConsumidor" class="text-danger"></span>
+    </div>
+
+    <!-- Desplegable de estados -->
+    <div class="form-group">
+        <label for="IdEstado">Estado del Deudor</label>
+        <select asp-for="IdEstado" asp-items="ViewBag.Estados" class="form-control" id="IdEstado">
+            <option value="">Seleccione un estado</option>
+        </select>
+        <span asp-validation-for="IdEstado" class="text-danger"></span>
+    </div>
+
+    <!-- Desplegable de productos (autocompletar) -->
+    <div class="form-group">
+        <label for="IdProducto">Producto</label>
+        <input type="text" id="ProductoInput" class="form-control" placeholder="Escribe el nombre del producto" />
+        <ul id="ProductoList" class="list-group" style="display:none;"></ul>
+        <input type="hidden" asp-for="IdProducto" id="IdProducto" />
+        <span asp-validation-for="IdProducto" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="Cantidad">Cantidad</label>
+        <input asp-for="Cantidad" class="form-control" id="Cantidad" />
+        <span asp-validation-for="Cantidad" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label for="Precio">Precio</label>
+        <input asp-for="Precio" class="form-control" id="Precio" readonly />
+        <span asp-validation-for="Precio" class="text-danger"></span>
+        <input type="checkbox" id="validarPrecio" name="validar" value="Cambia Precio" />
+        <label for="validarPrecio">Permitir modificar el precio</label>
+    </div>
+
+    <!-- Tabla para mostrar los registros temporales -->
+    <h4>Registros en Tabla</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Consumidor</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Deuda</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="tablaRegistros">
+            <!-- Los registros agregados aparecerán aquí -->
+        </tbody>
+    </table>
+
+    <input type="hidden" name="jsonData" id="jsonData" />
+
+    <button type="button" class="btn btn-primary" id="agregarRegistro">Agregar Registro</button>
+    <button type="button" class="btn btn-primary" id="agregarRegistro">Cotizacion</button>
+    <button type="button" class="btn btn-primary" id="agregarRegistro">Lista Negra</button>
+    <button type="submit" class="btn btn-success">Guardar</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+                      $(document).ready(function () {
+                    var registros = []; // Lista temporal para almacenar los registros
+                    var tempIdProducto = null;
+                    var tempIdConsumidor = null;
+                    // Buscar ítems dinámicos
+                    function buscarItems(inputId, listId, url, idKey, nameKey, extraDataKey = null) {
+                        $(inputId).on('input', function () {
+                            var query = $(this).val();
+                            if (query.length >= 2) {
+                                $.ajax({
+                                    url: url + '?term=' + query,
+                                    success: function (data) {
+                                        if (data && data.length > 0) {
+                                            var listItems = data.map(function (item) {
+                                                return `
+                                                    <li class="list-group-item"
+                                                        data-id="${item[idKey]}"
+                                                        data-extra="${extraDataKey ? item[extraDataKey] : ''}">
+                                                        ${item[nameKey]}
+                                                    </li>`;
+                                            }).join('');
+                                            $(listId).html(listItems).show();
+                                        } else {
+                                            $(listId).html('<li class="list-group-item">No se encontraron resultados</li>').show();
+                                        }
+                                    },
+                                    error: function () {
+                                        $(listId).html('<li class="list-group-item">Error al buscar</li>').show();
+                                    }
+                                });
+                            } else {
+                                $(listId).hide();
+                            }
+                        });
+
+                        $('#validarPrecio').on('change', function () {
+                            if ($(this).is(':checked')) {
+                                $('#Precio').prop('readonly', false); // Habilitar edición
+                            } else {
+                                $('#Precio').prop('readonly', true); // Deshabilitar edición
+                            }
+                        });
+
+                        $(listId).on('click', 'li', function () {
+                            var selectedText = $(this).text().trim(); // Nombre seleccionado
+                            var selectedId = $(this).data('id'); // ID seleccionado
+                            var selectedExtra = $(this).data('extra'); // Dato adicional (precio, etc.)
+
+                            $(inputId).val(selectedText); // Asignar nombre al input
+                            $(inputId + 'Id').val(selectedId); // Asignar ID al campo oculto
+
+                            if (inputId === '#ProductoInput') {
+                                tempIdProducto = selectedId;
+
+                                // Si hay dato adicional, asignarlo al campo de precio
+                                if (selectedExtra) {
+                                    $('#Precio').val(selectedExtra);
+                                }
+                            } else if (inputId === '#ConsumidorInput') {
+                                tempIdConsumidor = selectedId;
+                            }
+
+                            $(listId).hide();
+                        });
+                            }  
+
+                    $('#guardarListaNegra').on('click', function (e) {
+            // Deshabilitar validación en el campo "Cantidad"
+            $('#Cantidad').removeAttr('data-val').removeAttr('data-val-required');
+            $('form').removeData('validator').removeData('unobtrusiveValidation');
+            $.validator.unobtrusive.parse($('form')); // Recargar validaciones
+        });
+
+
+                    // Inicializar las búsquedas
+                    buscarItems(
+                        '#ProductoInput',
+                        '#ProductoList',
+                        '@Url.Action("BuscarProductos", "Deudor")',
+                        'idProducto',
+                        'nombreProducto',
+                        'precioProducto' // Clave para obtener el precio
+                    );
+                    buscarItems(
+                        '#ConsumidorInput',
+                        '#ConsumidorList',
+                        '@Url.Action("BuscarConsumidor", "Deudor")',
+                        'idConsumidor',
+                        'nombreConsumidor'
+                    );
+
+                    // Agregar registro a la tabla y lista temporal
+                          $('#agregarRegistro').on('click', function () {
+            var consumidor = $('#ConsumidorInput').val();
+            var idConsumidor = tempIdConsumidor;
+            var producto = $('#ProductoInput').val(); // Obtener el nombre del producto
+            var idProducto = tempIdProducto;
+            var cantidad = parseFloat($('#Cantidad').val()) || 0;
+            var precio = parseFloat($('#Precio').val()) || 0;
+            var deuda = cantidad * precio;
+
+            if (!idConsumidor || !idProducto || cantidad <= 0 || precio <= 0) {
+                alert('Por favor, completa los campos correctamente.');
+                return;
+            }
+
+            // Agregar todos los campos al registro, incluyendo el producto
+            registros.push({ idConsumidor, idProducto, producto, cantidad, precio, deuda });
+
+            // Añadir a la tabla
+            $('#tablaRegistros').append(`
+                <tr>
+                    <td>${consumidor}</td>
+                    <td>${producto}</td> <!-- Aquí se muestra el producto -->
+                    <td>${cantidad}</td>
+                    <td>${precio.toFixed(2)}</td>
+                    <td>${deuda.toFixed(2)}</td>
+                    <td><button type="button" class="btn btn-danger btn-sm eliminarRegistro">Eliminar</button></td>
+                </tr>
+            `);
+
+            // Limpiar los campos de entrada
+            $('#ProductoInput').val('');
+            $('#Cantidad').val('');
+            $('#Precio').val('');
+        });
+
+
+                  
+
+                    // Eliminar un registro
+                    $(document).on('click', '.eliminarRegistro', function () {
+                        var index = $(this).closest('tr').index();
+                        registros.splice(index, 1);
+                        $(this).closest('tr').remove();
+                    });//
+                           const IdEstado = document.getElementById('IdEstado'); // Asegúrate de que el id en HTML sea 'IdEstado'
+
+                IdEstado.addEventListener('change', function() { // O puedes usar () => {}
+                    const estadoId = IdEstado.value; // Asegúrate de usar 'estadoId' en todo el código
+                    if (estadoId) {
+                       
+                    } else {
+                        alert('No se ha seleccionado un estado');
+                    }
+                });
+
+                              ;
+                          $('form').on('submit', function (e) {
+
+                    // Convertir registros a JSON
+                    var consumidoresJson = JSON.stringify(registros);
+                    var deudaTotal = registros.reduce((acc, registro) => acc + registro.deuda, 0);
+
+                            if(!tempIdEstado)
+                            {
+                            }
+                            else{
+                            alert('nada para mostrar')
+                            }
+                    // Enviar datos al controlador
+                    $.ajax({
+                        url: $(this).attr('action'), // Ruta del controlador
+                        method: $(this).attr('method'), // POST
+                        contentType: 'application/json', // Indicar que es JSON
+                        data: JSON.stringify({
+                            consumidoresJson: consumidoresJson,
+                            deudaTotal: deudaTotal
+                        }),
+                        success: function (response) {
+                            alert(response.mensaje);
+                            console.log(response.mensaje);
+                        },
+                        error: function (error) {
+                            alert('Error al enviar datos');
+                            console.error(error);
+                        }
+                    });
+                });
+
+                });
+
+    </script>
+}
+

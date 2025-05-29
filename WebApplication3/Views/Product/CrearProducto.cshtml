@@ -1,0 +1,91 @@
+﻿@model List<WebApplication3.Models.DTOs.ProductDTO>
+
+@{
+    ViewData["Title"] = "Crear Productos";
+}
+
+<h2>Crear Productos</h2>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">@TempData["Mensaje"]</div>
+}
+
+<form asp-action="CrearProductos" method="post">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nombre del Producto</th>
+                <th>Proveedor</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="productTable">
+            <tr>
+                <td>
+                    <input type="text" name="[0].ProductName" class="form-control" placeholder="Nombre del producto" required />
+                </td>
+                <td>
+                    <input type="text" name="[0].ProductProvider" class="form-control" placeholder="Proveedor" required />
+                </td>
+                <td>
+                    <input type="number" step="0.01" name="[0].ProductPrices" class="form-control" placeholder="Precio Venta" required />
+                </td>
+                <td>
+                    <input type="number" name="[0].ProductStock" class="form-control" placeholder="Stock" required />
+                </td>
+                <td>
+                    <input type="number" step="0.01" name="[0].ProductBuyed" class="form-control" placeholder="Precio Coste" required />
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger" onclick="removeRow(this)">Eliminar</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button type="button" class="btn btn-primary" onclick="addRow()">Agregar Producto</button>
+    <button type="submit" class="btn btn-success">Guardar Productos</button>
+</form>
+
+@section Scripts {
+    <script>
+        let rowIndex = 1;
+
+        function addRow() {
+            const table = document.getElementById("productTable");
+            const newRow = document.createElement("tr");
+
+            newRow.innerHTML = `
+                <td>
+                    <input type="text" name="[${rowIndex}].ProductName" class="form-control" placeholder="Nombre del producto" required />
+                </td>
+                <td>
+                    <input type="text" name="[${rowIndex}].ProductProvider" class="form-control" placeholder="Proveedor" required />
+                </td>
+                <td>
+                    <input type="number" step="0.01" name="[${rowIndex}].ProductPrices" class="form-control" placeholder="Precio Venta" required />
+                </td>
+                <td>
+                    <input type="number" name="[${rowIndex}].ProductStock" class="form-control" placeholder="Stock" required />
+                </td>
+                  <td>
+                    <input type="number" name="[${rowIndex}].ProductBuyed" class="form-control" placeholder="Precio Coste" required />
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger" onclick="removeRow(this)">Eliminar</button>
+                </td>
+            `;
+
+            table.appendChild(newRow);
+            rowIndex++;
+        }
+
+        function removeRow(button) {
+            const row = button.parentElement.parentElement;
+            row.remove();
+        }
+    </script>
+}

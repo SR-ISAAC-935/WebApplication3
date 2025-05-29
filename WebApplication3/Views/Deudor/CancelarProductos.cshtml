@@ -1,0 +1,170 @@
+﻿@model WebApplication3.Models.DTOs.ListaNegraDTO
+<h1>Cancelar productos</h1>
+
+<div class="form-group">
+    <label for="IdConsumidor">Consumidor</label>
+    <input type="text" id="ConsumidorInput" class="form-control" placeholder="Escribe el nombre del consumidor" />
+    <ul id="ConsumidorList" class="list-group" style="display:none;"></ul>
+    <input type="hidden" asp-for="IdConsumidor" id="IdConsumidor" />
+    <span asp-validation-for="IdConsumidor" class="text-danger"></span>
+</div>
+<div class="form-group">
+    <label for="Precio">Precio</label>
+    <input asp-for="Precio" class="form-control" id="Precio" readonly />
+    <span asp-validation-for="Precio" class="text-danger"></span>
+    <input type="checkbox" id="validarPrecio" name="validar" value="Cambia Precio" />
+    <label for="validarPrecio">Permitir modificar el precio</label>
+</div>
+<div class="form-group">
+    <label for="Precio">Precio</label>
+    <input asp-for="Precio" class="form-control" id="Pagare" />
+    <span asp-validation-for="Precio" class="text-danger"></span>
+
+</div>
+
+<!-- Botón para obtener las facturas pendientes -->
+<button id="btnObtenerFacturas" class="btn btn-primary mt-3">Obtener productos pendientes</button>
+
+<!-- Tabla donde se mostrarán los productos pendientes -->
+<table id="tablaProductosPendientes" class="table mt-3" style="display:none;">
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Aquí se llenarán las filas de la tabla -->
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+           $(document).ready(function () {
+        var tempIdConsumidor = null;
+
+        function buscarItems(inputId, listId, url, idAttribute, nameAttribute, extraAttribute = null) {
+            $(inputId).on('input', function () {
+                var query = $(this).val();
+                if (query.length >= 2) {
+                    $.ajax({
+                        url: url + '?term=' + query,
+                        success: function (data) {
+                            if (data && data.length > 0) {
+                                var listItems = data.map(function (item) {
+                                    return `<li class="list-group-item"
+                                                data-id="${item[idAttribute]}"
+                                                data-extra="${extraAttribute ? item[extraAttribute] : ''}">
+                                                ${item[nameAttribute]}</li>`;
+                                }).join('');
+                                $(listId).html(listItems).show();
+                            } else {
+                                $(listId).html('<li class="list-group-item">No se encontraron resultados</li>').show();
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error en la solicitud:', error);
+                            $(listId).html('<li class="list-group-item">Error al buscar</li>').show();
+                        }
+                    });
+                } else {
+                    $(listId).hide();
+                }
+            });
+
+                    $(listId).on('click', 'li', function () {
+            var selectedText = $(this).text().trim();
+            var selectedId = $(this).data('id');
+            $(inputId).val(selectedText);
+            $(inputId + 'Id').val(selectedId);
+
+            if (inputId === '#ConsumidorInput') {
+                tempIdConsumidor = selectedId;
+
+                // Llamar al servidor para obtener la deuda
+                $.ajax({
+                    url: '@Url.Action("ObtenerFacturasPendientes", "Deudor")',
+                    type: 'GET',
+                    data: { idConsumidor: tempIdConsumidor },
+                    success: function (data) {
+                        if (data && data.length > 0) {
+                            // Calcular la deuda total sumando los precios de los productos pendientes
+                            var deudaTotal = data.reduce(function (total, producto) {
+                                return total + producto.precio * producto.cantidad;
+                            }, 0);
+
+                            // Mostrar la deuda en el input readonly
+                            $('#Precio').val(deudaTotal.toFixed(2));
+                        } else {
+                            $('#Precio').val("0.00");
+                        }
+                    },
+                    error: function () {
+                        alert("Error al obtener la deuda del consumidor.");
+                        $('#Precio').val("0.00");
+                    }
+                });
+            }
+            console.log(tempIdConsumidor);
+            $(listId).hide();
+        });
+
+        }
+
+        buscarItems(
+            '#ConsumidorInput',
+            '#ConsumidorList',
+            '@Url.Action("BuscarConsumidor", "Deudor")',
+            'idConsumidor',
+            'nombreConsumidor',
+            'extraData'
+        );
+
+            // Evento para obtener los productos pendientes
+            $('#btnObtenerFacturas').on('click', function () {
+                var idConsumidor =  tempIdConsumidor;
+
+                if (!idConsumidor) {
+                    alert("Por favor, seleccione un consumidor.");
+                    return;
+                }
+
+                // Hacer una solicitud AJAX para obtener los productos pendientes
+                $.ajax({
+                    url: '@Url.Action("ObtenerFacturasPendientes", "Deudor")',
+                     type: 'GET',
+                    data: { idConsumidor: idConsumidor},
+                    success: function (data) {
+                        if (data && data.length > 0) {
+                           console.log(data)
+                            var tabla = $('#tablaProductosPendientes tbody');
+                            tabla.empty(); // Limpiar la tabla antes de agregar los nuevos productos
+
+                            // Llenar la tabla con los productos pendientes
+                            data.forEach(function (producto) {
+                                tabla.append(`
+                                    <tr>
+                                        <td>${producto.nombreProducto}</td>
+                                        <td>${producto.cantidad}</td>
+                                        <td>${producto.precio}</td>
+                                        <td>${producto.estadoPago}</td>
+                                    </tr>`
+                                );
+                            });
+
+                            $('#tablaProductosPendientes').show(); // Mostrar la tabla
+                        } else {
+                            alert("No hay productos pendientes para este consumidor.");
+                            $('#tablaProductosPendientes').hide(); // Ocultar la tabla si no hay productos
+                        }
+                    },
+                    error: function () {
+                        alert("Error al obtener los productos pendientes.");
+                    }
+                });
+            });
+        });
+    </script>
+}
