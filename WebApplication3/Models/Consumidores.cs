@@ -6,5 +6,6 @@ public partial class Consumidores
 
     public string NombreConsumidor { get; set; } = null!;
 
+    public int IdRol { get; set; }
     public virtual ICollection<ListaNegra> ListaNegras { get; set; } = new List<ListaNegra>();
 }

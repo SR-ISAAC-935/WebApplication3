@@ -1,4 +1,7 @@
-﻿namespace WebApplication3.Models;
+﻿using System;
+using System.Collections.Generic;
+
+namespace WebApplication3.Models;
 
 public partial class Usuario
 {
@@ -7,4 +10,8 @@ public partial class Usuario
     public string Users { get; set; } = null!;
 
     public string? Passwords { get; set; }
+
+    public int? IdRole { get; set; }
+
+    public virtual Role? IdRoleNavigation { get; set; }
 }

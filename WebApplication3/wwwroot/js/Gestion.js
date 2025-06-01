@@ -3,6 +3,8 @@
     console.error(message);
 }
 
+var registros = [];
+
 $("#ConsumidorInput").on("input", function () {
     const term = $(this).val();
     if (term.length < 3) {
@@ -68,7 +70,7 @@ $("#btnObtenerFacturas").on("click", function () {
                             <td><button class="btn btn-primary btn-detalles" data-id="${d.idListado}">Ver detalles</button></td>
                              <td><input type="text" name="AbonoDeuda" class="AbonoDeuda" placeholder="Ingrese abono a deuda" /></td>
                      <td><button class="btn btn-danger btn-Cancelar" data-id="${d.idListado}">Abonar Deuda</button></td>
-                      <td><button class="btn btn-primary btn-AbonoDetalles" data-id="${d.idListado}">Detalles Abonos</button></td>
+                      <td><button class="btn btn-primary btn-imprimir" data-id="${d.idListado}">Imprimir</button></td>
                         </tr>
                     `);
             });
@@ -103,6 +105,19 @@ $("#DeudasTableBody").on("click", ".btn-Cancelar", function () {
     });
 
 });
+$('#AbonosTableBody tr').each(function () {
+    var fila = $(this);
+    var filaData = [];
+
+    fila.find('<td>').each(function () {
+        filaData.push($(this).text().trim());
+    });
+    console.log(filaData);
+    console.log(filaData.length);
+    console.log(fila);
+    registros.push(filaData);
+});
+
 $("#DeudasTableBody").on("click", ".btn-Cancelar", function () {
     const fila = $(this).closest("tr");
     const abonoo = fila.find('input[name="AbonoDeuda"]').val();
@@ -158,7 +173,7 @@ $("#DeudasTableBody").on("click", ".btn-detalles", function () {
                             <td>${d.cantidad}</td>
                             <td>${d.precio.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             <td>${d.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                             <td><button class="btn btn-danger btn-AbonoDetalles"  data-id="${idListado}">Detalle Abonos</button></td>
+                            
                         </tr>
                     `);
             });
@@ -193,6 +208,7 @@ $("#DeudasTableBody").on("click", ".btn-AbonoDetalles", function () {
             } else {
                 datos.forEach((d, index) => {
                     tbody.append(`
+                    <tr> <td><button type="button" class="btn btn-primary" id="imprimir">Imprimir recibo</button></td></tr>
                     <tr>
                         <td>${index + 1}</td>
                         <td>${d.name}</td>
@@ -216,3 +232,97 @@ $("#DeudasTableBody").on("click", ".btn-AbonoDetalles", function () {
 
 
 })
+$('#imprimir').on('click', function (e) {
+    e.preventDefault();
+    console.log(registros);
+    const registrosArray = Object.values(registros);
+    console.log(registrosArray)
+    if (registrosArray.length === 0) {
+        alert('No hay registros para generar un recibo.');
+        return;
+    }
+
+    // Agrupar productos por idConsumidor
+    const agrupadoPorConsumidor = {};
+
+    registrosArray.forEach(reg => {
+        const id = reg.idConsumidor;
+        if (!agrupadoPorConsumidor[id]) {
+            agrupadoPorConsumidor[id] = {
+                nombreCliente: $('#ConsumidorInput').val() || `Consumidor ${id}`, // Puedes adaptar esto
+                fecha: new Date().toISOString(),
+                productos: []
+            };
+        }
+
+        agrupadoPorConsumidor[id].productos.push({
+            Codigo: reg.idProducto,
+            Descripcion: reg.producto,
+            Cantidad: reg.cantidad,
+            PrecioUnitario: reg.precio
+        });
+    });
+
+    const consumidores = Object.values(agrupadoPorConsumidor);
+
+    // Crear cuadro de diálogo de confirmación
+    const dialogHtml = `
+        <div id="confirmPrintDialog" class="modal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar Impresión</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Número de consumidores:</strong> ${consumidores.length}</p>
+                        <p>¿Deseas proceder con la impresión de los recibos?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" id="confirmPrintButton" class="btn btn-primary">Imprimir</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Agregar el cuadro de diálogo al DOM
+    $('body').append(dialogHtml);
+    const modal = new bootstrap.Modal(document.getElementById('confirmPrintDialog'));
+    modal.show();
+
+    // Manejar la confirmación
+    $('#confirmPrintButton').on('click', function () {
+        modal.hide();
+        $('#confirmPrintDialog').remove();
+
+        consumidores.forEach((reciboData, index) => {
+            $.ajax({
+                url: '/Cotizacion/ImprimirRecibos',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(reciboData),
+                xhrFields: { responseType: 'blob' },
+                success: function (data) {
+                    const blob = new Blob([data], { type: 'application/pdf' });
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const newTab = window.open(blobUrl, '_blank');
+                    if (newTab) {
+                        newTab.focus();
+                    } else {
+                        alert('Por favor, habilita los pop-ups para esta página.');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error al generar el recibo:', status, error);
+                    alert('Error al generar uno de los recibos.');
+                }
+            });
+        });
+    });
+
+    $('#confirmPrintDialog').on('hidden.bs.modal', function () {
+        $(this).remove();
+    });
+});

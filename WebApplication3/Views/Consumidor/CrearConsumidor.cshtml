@@ -12,46 +12,60 @@
         @TempData["Mensaje"]
     </div>
 }
-
 <form id="consumidoresForm" method="post">
     <div class="form-group">
         <label for="NombreConsumidor">Nombre del Consumidor</label>
         <input type="text" class="form-control" id="NombreConsumidor" placeholder="Ingrese el nombre del consumidor" />
-        <button type="button" class="btn btn-info" id="agregarConsumidor">Agregar Consumidor</button>
     </div>
 
-    <ul id="consumidoresList">
-        <!-- Lista de consumidores agregados aparecerá aquí -->
-    </ul>
+    <div class="form-group">
+        <label for="Rol">Rol</label>
+        <select id="Rol" class="form-control">
+            <option value="">Seleccione un rol</option>
+        </select>
+    </div>
 
-    <button type="submit" class="btn btn-primary">Guardar Consumidores</button>
+    <button type="button" class="btn btn-info" id="agregarConsumidor">Agregar Consumidor</button>
+
+    <ul id="consumidoresList" class="mt-3"></ul>
+
+    <button type="submit" class="btn btn-primary mt-2">Guardar Consumidores</button>
 </form>
 
 @section Scripts {
+     <script src="~/js/Roles.js" asp-append-version="true"></script>
     <script>
         $(document).ready(function () {
             var consumidores = []; // Array para almacenar los consumidores agregados
 
             // Función para agregar un consumidor a la lista
             $('#agregarConsumidor').click(function () {
-                var nombreConsumidor = $('#NombreConsumidor').val();
-                if (nombreConsumidor) {
-                    consumidores.push({ NombreConsumidor: nombreConsumidor });
+    var nombreConsumidor = $('#NombreConsumidor').val().trim();
+    var rolId = $('#Rol').val();
+    var rolNombre = $('#Rol option:selected').text();
 
-                    // Mostrar en la lista
-                    $('#consumidoresList').append('<li>' + nombreConsumidor + ' <button type="button" class="btn btn-danger btn-sm eliminarConsumidor">Eliminar</button></li>');
-                    $('#NombreConsumidor').val(''); // Limpiar el campo de texto
-                } else {
-                    alert("Por favor, ingrese un nombre de consumidor.");
-                }
-            });
+    if (!nombreConsumidor || !rolId) {
+        alert("Debe ingresar un nombre y seleccionar un rol.");
+        return;
+    }
 
-            // Eliminar un consumidor de la lista
-            $('#consumidoresList').on('click', '.eliminarConsumidor', function () {
-                var index = $(this).parent().index();
-                consumidores.splice(index, 1); // Eliminar el consumidor del array
-                $(this).parent().remove(); // Eliminar el elemento de la lista en la vista
-            });
+    consumidores.push({
+        NombreConsumidor: nombreConsumidor,
+        RolNombre: rolNombre,
+        IdRole:rolId
+    });
+
+    $('#consumidoresList').append(`
+        <li>
+            ${nombreConsumidor} - ${rolNombre} 
+            <button type="button" class="btn btn-danger btn-sm eliminarConsumidor">Eliminar</button>
+        </li>
+    `);
+
+    $('#NombreConsumidor').val('');
+    $('#Rol').val('');
+});
+
 
             // Enviar el formulario
             $('#consumidoresForm').submit(function (event) {
@@ -60,7 +74,7 @@
                 if (consumidores.length > 0) {
                     // Convertir el array de consumidores a JSON
                     var consumidoresJson = JSON.stringify(consumidores);
-
+                    console.log(consumidoresJson)
                     // Enviar los datos al controlador
                     $.ajax({
                         url: '@Url.Action("CrearConsumidores", "Consumidor")',
@@ -68,7 +82,8 @@
                         contentType: 'application/json',
                         data: consumidoresJson,
                         success: function (response) {
-                            alert("Consumidores guardados exitosamente");
+                                    console.log(response.Mensaje, response.Datos);
+                                 alert(response.Mensaje);
                             // Limpiar la lista y el array
                             $('#consumidoresList').empty();
                             consumidores = [];

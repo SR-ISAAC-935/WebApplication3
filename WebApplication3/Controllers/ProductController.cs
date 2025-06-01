@@ -20,6 +20,11 @@ namespace YourNamespace.Controllers
         }
           public async Task<IActionResult> Inventario(string filtro)
           {
+            if (User.IsInRole("Trabajador"))
+            {
+                TempData["MensajeError"] = "No está autorizado para acceder a esta página.";
+                return RedirectToAction("ErrorAuth", "Home");
+            }
               try
               {
                   // Consulta inicial de productos
@@ -126,6 +131,11 @@ namespace YourNamespace.Controllers
         [HttpGet]
         public IActionResult CrearProducto()
         {
+            if (User.IsInRole("Trabajador"))
+            {
+                TempData["MensajeError"] = "No está autorizado para acceder a esta página.";
+                return RedirectToAction("ErrorAuth", "Home");
+            }
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 // Supongamos que el nombre del usuario está almacenado en la propiedad Name del token

@@ -85,11 +85,11 @@ namespace WebApplication3.Controllers
                 // Busca el usuario en la base de datos
                 var user = await _context.Usuarios
                     .FirstOrDefaultAsync(u => u.Users == loginDTOs.Usuario && u.Passwords == _utilidades.encriptarSHA256(loginDTOs.Password));
-
+                var role =  _context.Roles.FirstOrDefault(u => u.Id.Equals(user.IdRole));
                 if (user != null)
                 {
                     // Genera el token JWT
-                    var token = _utilidades.generarJwT(user);
+                    var token = _utilidades.generarJwT(user,role);
 
                     // Guarda el token en una cookie segura
                     Response.Cookies.Append("AppAuthToken", token, new CookieOptions
@@ -99,6 +99,7 @@ namespace WebApplication3.Controllers
                         SameSite = SameSiteMode.Strict, // Previene el envío en solicitudes cruzadas
                         Expires = DateTimeOffset.Now.AddHours(10), // Tiempo de expiración del token
                     });
+                    Console.WriteLine(token);
 
                     TempData["SuccessMessage"] = "Inicio de sesión exitoso";
                     return RedirectToAction("Index", "Home");

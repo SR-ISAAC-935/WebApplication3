@@ -11,8 +11,6 @@
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-   @* <a asp-action="Productos" > productos</a>*@
     <a class="btn btn-dark" asp-controller="Deudor"  asp-action="CrearDeudor">Lista Negra</a>
     <a class="btn btn-dark" asp-controller="Product" asp-action="CrearProducto">Crear Productos</a>
     <a class="btn btn-dark" asp-controller="Product" asp-action="Inventario">Inventario</a>
@@ -25,4 +23,5 @@
     <a class="btn btn-dark" asp-controller="ResumenVentas" asp-action="ResumenHoy">Resumen del dia</a>
     <a class="btn btn-dark" asp-controller="ResumenVentas" asp-action="Vendido">Resumen de ventas</a>
     <a class="btn btn-dark" asp-controller="Facturas" asp-action="Facturacion">Facturas</a>
+    <a class="btn btn-dark" asp-controller="Home" asp-action="Consumidor">Consumidores y mas</a>
 </div>

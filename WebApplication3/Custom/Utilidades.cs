@@ -29,13 +29,14 @@ namespace WebApplication3.Custom
             }
         }
 
-        public string generarJwT(Usuario user)
+        public string generarJwT(Usuario user,Role role)
         {
             var claims = new[]
             {
         new Claim(ClaimTypes.NameIdentifier, user.IdUser.ToString()),
         new Claim(JwtRegisteredClaimNames.Sub, user.Users), // Nombre de usuario
         new Claim(ClaimTypes.Name, user.Users),             // Nombre para User.Identity.Name
+        new Claim(ClaimTypes.Role,role.Rol),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
 

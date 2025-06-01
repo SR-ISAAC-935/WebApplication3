@@ -57,35 +57,35 @@ namespace WebApplication3.Custom
 
         public async Task<List<DetalleDeudaDTO>> ObtenerDetallesDeDeudaAsync(int idListado)
         {
-            var detallesDeuda = new List<DetalleDeudaDTO>();
+            //var detallesDeuda = new List<DetalleDeudaDTO>();
 
-            try
-            {
-                // Consulta LINQ optimizada
-                detallesDeuda = await Task.Run(() =>
-                    _context.DetalleListaNegras
-                        .Where(d => d.IdListado == idListado)
-                        .Join(
-                            _context.Products,
-                            detalle => detalle.IdProducto,
-                            producto => producto.IdProduct,
-                            (detalle, producto) => new DetalleDeudaDTO
-                            {
-                                Producto = producto.ProductName,
-                                Cantidad = detalle.Cantidad,
-                                Precio = detalle.Precio,
-                                Total = detalle.Cantidad * detalle.Precio
-                            })
-                        .ToList());
-            }
-            catch (Exception ex)
-            {
-                // Manejo de excepciones centralizado
-                throw new Exception("Error al obtener detalles de la deuda", ex);
-            }
+            //try
+            //{
+            //    // Consulta LINQ optimizada
+            //    detallesDeuda = await Task.Run(() =>
+            //        _context.DetalleListaNegras
+            //            .Where(d => d.IdListado == idListado)
+            //            .Join(
+            //                _context.Products,
+            //                detalle => detalle.IdProducto,
+            //                producto => producto.IdProduct,
+            //                (detalle, producto) => new DetalleDeudaDTO
+            //                {
+            //                    Producto = producto.ProductName,
+            //                    Cantidad = detalle.Cantidad,
+            //                    Precio = detalle.Precio,
+            //                    Total = detalle.Cantidad * detalle.Precio
+            //                })
+            //            .ToList());
+            //}
+            //catch (Exception ex)
+            //{
+            //    // Manejo de excepciones centralizado
+            //    throw new Exception("Error al obtener detalles de la deuda", ex);
+            //}
 
-            return detallesDeuda;
-
+            //return detallesDeuda;
+            return null;
 
         }
     }

@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebApplication3.Models;
 
@@ -15,6 +17,8 @@ public partial class LumitecContext : DbContext
 
     public virtual DbSet<Abono> Abonos { get; set; }
 
+    public virtual DbSet<ConsuElectricista> ConsuElectricistas { get; set; }
+
     public virtual DbSet<Consumidore> Consumidores { get; set; }
 
     public virtual DbSet<DetailSalesClient> DetailSalesClients { get; set; }
@@ -28,6 +32,8 @@ public partial class LumitecContext : DbContext
     public virtual DbSet<ListaNegra> ListaNegras { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
+
+    public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<SalesClientResume> SalesClientResumes { get; set; }
 
@@ -64,11 +70,24 @@ public partial class LumitecContext : DbContext
                 .HasConstraintName("FK_Usuario_Abono");
         });
 
+        modelBuilder.Entity<ConsuElectricista>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__ConsuEle__3213E83F9DEDC9A0");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Descripcion).HasMaxLength(17);
+        });
+
         modelBuilder.Entity<Consumidore>(entity =>
         {
             entity.HasKey(e => e.IdConsumidor).HasName("PK__Consumid__9F510D9639E38DAB");
 
+            entity.Property(e => e.IdRole).HasColumnName("Id Role");
             entity.Property(e => e.NombreConsumidor).HasMaxLength(45);
+
+            entity.HasOne(d => d.IdRoleNavigation).WithMany(p => p.Consumidores)
+                .HasForeignKey(d => d.IdRole)
+                .HasConstraintName("FK_RoleConsum");
         });
 
         modelBuilder.Entity<DetailSalesClient>(entity =>
@@ -178,6 +197,14 @@ public partial class LumitecContext : DbContext
             entity.Property(e => e.ProductStock).HasColumnName("Product_Stock");
         });
 
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Roles__3213E83FC6FA275C");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Rol).HasMaxLength(15);
+        });
+
         modelBuilder.Entity<SalesClientResume>(entity =>
         {
             entity.HasKey(e => e.IdSales).HasName("PK__SalesCli__853C82F8EA2B42AC");
@@ -200,8 +227,13 @@ public partial class LumitecContext : DbContext
             entity.HasKey(e => e.IdUser).HasName("PK__Usuarios__3717C9828326C28E");
 
             entity.Property(e => e.IdUser).HasColumnName("idUser");
+            entity.Property(e => e.IdRole).HasColumnName("idRole");
             entity.Property(e => e.Passwords).HasMaxLength(75);
             entity.Property(e => e.Users).HasMaxLength(30);
+
+            entity.HasOne(d => d.IdRoleNavigation).WithMany(p => p.Usuarios)
+                .HasForeignKey(d => d.IdRole)
+                .HasConstraintName("FK_Roles");
         });
 
         OnModelCreatingPartial(modelBuilder);

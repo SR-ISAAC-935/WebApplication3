@@ -1,0 +1,41 @@
+﻿@model IEnumerable<WebApplication3.Models.Consumidore>
+
+<div class="card text-primary">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">  
+                </hr>
+                <h5 class="panel-title">consumidores</h5>
+                </div>
+                <div class="panel-body">
+                    <Table class="table table-hover table-responsive table-striped" id="consumidorestable">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <a>#</a>
+                                </th>
+                                <th>
+                                    <a>Consumidor</a>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var item in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        @item.IdConsumidor
+                                    </td>
+                                    <td>
+                                        @item.NombreConsumidor
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </Table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
