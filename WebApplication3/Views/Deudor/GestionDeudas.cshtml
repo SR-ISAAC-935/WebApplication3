@@ -35,13 +35,21 @@
                 <th># Deuda</th>
                 <th>Deudor</th>
                 <th>Deuda</th>
-                <th>Total</th>
                 <th>Fecha inicio deuda</th>
                 <th>Estado</th>
             </tr>
         </thead>
         <tbody id="DetallesTableBody">
-
+            @foreach (var deuda in Model)
+            {
+                <tr>
+                    <td>@deuda.IdListaNegra</td>
+                    <td>@deuda.NombreConsumidor</td>
+                    <td>@deuda.Deuda</td>
+                    <td>@deuda.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                    <td>@(deuda.Estado)</td>
+                </tr>
+            }
 
         </tbody>
     </table>
