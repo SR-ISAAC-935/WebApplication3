@@ -85,8 +85,6 @@ $("#DeudasTableBody").on("click", ".btn-Cancelar", function () {
     const abono = fila.find('input[name="AbonoDeuda"]').val();
     const idListado = $(this).data("id");
 
-    alert(`Se llamó la id ${idListado}, valor de abono es de ${abono}`);
-
     if (!idListado) {
         showError("ID de deuda no válido.");
         return;
@@ -97,7 +95,6 @@ $("#DeudasTableBody").on("click", ".btn-Cancelar", function () {
         data: { idListado, abono },
     }).done(function (data) {
         console.log(data)
-        alert(data.mensaje)
         location.reload();
     }).fail(function (xhr) {
         console.log(`error en ${xhr.responseText}`);
@@ -123,7 +120,7 @@ $("#DeudasTableBody").on("click", ".btn-Cancelar", function () {
     const abonoo = fila.find('input[name="AbonoDeuda"]').val();
     const idListado = $(this).data("id");
     const idUsuario = $("#IdConsumidor").val();
-    alert(`Se llamó la id ${idListado}, valor de abono es de ${abonoo}, y la id${idUsuario}`);
+  
 
     if (!idListado) {
         showError("ID de deuda no válido.");
@@ -135,7 +132,7 @@ $("#DeudasTableBody").on("click", ".btn-Cancelar", function () {
         data: { idListado, abonoo, idUsuario  },
     }).done(function (data) {
         console.log(data)
-        alert(data.mensaje)
+      //  alert(data.mensaje)
        // location.reload();
     }).fail(function (xhr) {
         console.log(`error en ${xhr.responseText}`);

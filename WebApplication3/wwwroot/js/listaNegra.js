@@ -48,7 +48,7 @@ $("#ListaNegra").on("click", function (e) {
         contentType: "application/json",
         data: JSON.stringify(requestData),
     }).done(function (data) {
-        alert(data.mensaje);
+       // alert(data.mensaje);
     }).fail(function (xhr) {
         alert(`Hubo un error: ${xhr.responseText}`);
         console.log(`Hubo un error: ${xhr.responseText}`)
@@ -90,7 +90,7 @@ $("#Ventas").on("click", function (e) {
         contentType: "application/json",
         data: JSON.stringify(request),
         success: function (data) {
-            alert(data.mensaje);
+          //  alert(data.mensaje);
         },
         error: function (xhr) {
             alert(`Hubo un error: ${xhr.responseText}`);
