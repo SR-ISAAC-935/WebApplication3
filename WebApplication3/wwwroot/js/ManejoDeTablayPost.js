@@ -4,7 +4,8 @@ var tempIdProducto = null;
 var tempIdConsumidor = null;
 
 // Función para agregar un nuevo registro
-$('#agregarRegistro').on('click', function () {
+$('#agregarRegistro').on('click', function (e) {
+    e.preventDefault();
     try {
         // Obtener valores de los campos
         var consumidor = $('#ConsumidorInput').val().trim();
@@ -44,7 +45,8 @@ $('#agregarRegistro').on('click', function () {
     <td>${consumidor}</td>
     <td>${producto}</td>
     <td>
-        ${cantidad}
+     <button type="button" class="btn btn-warning btn-sm sumarCantidad" style="margin-left: 5px;">+</button>
+       <span class="cantidad"> ${cantidad}</span>
         <button type="button" class="btn btn-warning btn-sm restarCantidad" style="margin-left: 5px;">-</button>
     </td>
     <td>${precio.toFixed(2)}</td>
@@ -76,8 +78,8 @@ function limpiarCampos() {
     $('#Precio').val('');
 }
 
-// Evento para restar cantidad
-$('#tablaRegistros').on('click', '.restarCantidad', function () {
+//// Evento para restar cantidad
+$(document).on('click', '.restarCantidad', function () {
     try {
         var fila = $(this).closest('tr');
         var idUnico = fila.data('id');
@@ -86,17 +88,38 @@ $('#tablaRegistros').on('click', '.restarCantidad', function () {
         var registro = Object.values(registros).find(reg => reg.id === idUnico);
 
         if (registro) {
-            if (registro.cantidad > 1) {
-                registro.cantidad -= 1;
-                registro.deuda = registro.cantidad * registro.precio;
-                actualizarFila(fila, registro);
-            } else {
-                alert('La cantidad no puede ser menor que 1. Si desea eliminar el registro, use el botón de eliminar.');
-            }
+            registro.cantidad -= 1;
+            registro.deuda = registro.cantidad * registro.precio;
+
+            // Actualizar cantidad y deuda en la fila
+            fila.find('.cantidad').text(registro.cantidad);
+            fila.find('td').eq(4).text(registro.deuda.toFixed(2)); // deuda está en la columna 4
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Ocurrió un error al restar la cantidad.');
+        alert('Ocurrió un error al sumar la cantidad.');
+    }
+});
+
+$(document).on('click', '.sumarCantidad', function () {
+    try {
+        var fila = $(this).closest('tr');
+        var idUnico = fila.data('id');
+
+        // Buscar el registro correspondiente
+        var registro = Object.values(registros).find(reg => reg.id === idUnico);
+
+        if (registro) {
+            registro.cantidad += 1;
+            registro.deuda = registro.cantidad * registro.precio;
+
+            // Actualizar cantidad y deuda en la fila
+            fila.find('.cantidad').text(registro.cantidad);
+            fila.find('td').eq(4).text(registro.deuda.toFixed(2)); // deuda está en la columna 4
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Ocurrió un error al sumar la cantidad.');
     }
 });
 

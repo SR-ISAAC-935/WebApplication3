@@ -32,7 +32,9 @@ namespace WebApplication3.Controllers
         [HttpPost]
         public async Task<IActionResult> RealizarVenta([FromBody] CrearVentaRequest request)
         {
-            Console.WriteLine($"se envio{request.ConsumidoresJson.Length}");
+         
+           
+
             if (request == null)
             {
                 return StatusCode(500, new { mensaje = "No se envió nada" });

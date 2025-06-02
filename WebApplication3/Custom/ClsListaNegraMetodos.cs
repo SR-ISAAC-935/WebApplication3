@@ -105,7 +105,7 @@ namespace WebApplication3.Custom
 
         public List<DetalleDeudaDTO> ObtenerDetallesPorListado(int idListado)
         {
-            return (from d in _context.DetalleListaNegras
+            return (from d in _context.DetalleListaNegra
                     join p in _context.Products
                         on d.IdProducto equals p.IdProduct
                     join e in _context.EstadosDeudores
@@ -147,7 +147,6 @@ namespace WebApplication3.Custom
                              }).ToList();
 
             return resultado;
-
         }
         public void ActualizarDeuda(int idListado, double abono)
         {

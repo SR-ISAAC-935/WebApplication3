@@ -23,7 +23,7 @@ public partial class LumitecContext : DbContext
 
     public virtual DbSet<DetailSalesClient> DetailSalesClients { get; set; }
 
-    public virtual DbSet<DetalleListaNegra> DetalleListaNegras { get; set; }
+    public virtual DbSet<DetalleListaNegra> DetalleListaNegra { get; set; }
 
     public virtual DbSet<EstadoProducto> EstadoProductos { get; set; }
 

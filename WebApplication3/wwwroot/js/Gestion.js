@@ -3,8 +3,8 @@
     console.error(message);
 }
 
-var registros = [];
-
+let detallesAbonados = [];
+let detallesAbono = [];
 $("#ConsumidorInput").on("input", function () {
     const term = $(this).val();
     if (term.length < 3) {
@@ -70,7 +70,7 @@ $("#btnObtenerFacturas").on("click", function () {
                             <td><button class="btn btn-primary btn-detalles" data-id="${d.idListado}">Ver detalles</button></td>
                              <td><input type="text" name="AbonoDeuda" class="AbonoDeuda" placeholder="Ingrese abono a deuda" /></td>
                      <td><button class="btn btn-danger btn-Cancelar" data-id="${d.idListado}">Abonar Deuda</button></td>
-                      <td><button class="btn btn-primary btn-imprimir" data-id="${d.idListado}">Imprimir</button></td>
+                      <td><button class="btn btn-primary btn-AbonoDetalles" data-id="${d.idListado}">Detalles Abonos</button></td>
                         </tr>
                     `);
             });
@@ -115,7 +115,7 @@ $('#AbonosTableBody tr').each(function () {
     console.log(filaData);
     console.log(filaData.length);
     console.log(fila);
-    registros.push(filaData);
+    detallesAbonados.push(filaData);
 });
 
 $("#DeudasTableBody").on("click", ".btn-Cancelar", function () {
@@ -165,7 +165,9 @@ $("#DeudasTableBody").on("click", ".btn-detalles", function () {
                 $("#DetallesContainer").hide();
                 return;
             }
-
+            console.log("Detalles de deuda:", data.datos);
+            detallesAbono = Array.isArray(data) ? data : [];
+            console.log("Detalles de abono:", detallesAbono);
             data.forEach(d => {
                 tbody.append(`
                         <tr>
@@ -199,67 +201,62 @@ $("#DeudasTableBody").on("click", ".btn-AbonoDetalles", function () {
         const tbody = $("#AbonosTableBody");
         tbody.empty();
 
-        const datos = response.datos; // <- Aquí se corrige el error
-        if (Array.isArray(datos)) {
-            console.log(`Cantidad de abonos: ${datos.length}`);
+        const datos = response.datos;
 
-            if (datos.length === 0) {
-                showError(response.mensaje);
-            } else {
-                datos.forEach((d, index) => {
-                    tbody.append(`
-                    <tr> <td><button type="button" class="btn btn-primary" id="imprimir">Imprimir recibo</button></td></tr>
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${d.name}</td>
-                        <td>${d.abonado}</td>
-                        <td>${d.fechaAbono}</td>
-                        <td>${d.total}</td>
-                    </tr>
-                `);
-                });
-
-                $("#AbonosContainer").show();
-                datos.forEach((abono, index) => {
-                    console.log(`Abono #${index + 1}:`, abono);
-                });
-            }
+        // 💾 Almacenar los datos en la variable global
+        detallesAbono = Array.isArray(datos) ? datos : [];
+        console.log("Detalles de abono:", detallesAbono);
+        if (detallesAbono.length === 0) {
+            showError(response.mensaje);
         } else {
-            showError("Respuesta inesperada del servidor.");
+            detallesAbono.forEach((d, index) => {
+                tbody.append(`
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${d.name}</td>
+                    <td>${d.abonado}</td>
+                    <td>${d.fechaAbono}</td>
+                    <td>${d.total}</td>
+                </tr>
+            `);
+            });
+
+            $("#AbonosContainer").show();
+
+            // Mostrar en consola para verificar
+            console.log("Abonos almacenados:", detallesAbono);
         }
     });
 
-
-
 })
+
 $('#imprimir').on('click', function (e) {
     e.preventDefault();
-    console.log(registros);
-    const registrosArray = Object.values(registros);
-    console.log(registrosArray)
-    if (registrosArray.length === 0) {
-        alert('No hay registros para generar un recibo.');
+    console.log(detallesAbono);
+    const detallesAbonadosArray = Object.values(detallesAbono);
+    console.log('detalles para impresion',detallesAbonadosArray)
+    if (detallesAbonadosArray.length === 0) {
+        alert('No hay detallesAbonados para generar un recibo.');
         return;
     }
 
     // Agrupar productos por idConsumidor
     const agrupadoPorConsumidor = {};
 
-    registrosArray.forEach(reg => {
+    detallesAbonadosArray.forEach(reg => {
         const id = reg.idConsumidor;
         if (!agrupadoPorConsumidor[id]) {
             agrupadoPorConsumidor[id] = {
-                nombreCliente: $('#ConsumidorInput').val() || `Consumidor ${id}`, // Puedes adaptar esto
-                fecha: new Date().toISOString(),
-                productos: []
+                NombreCliente: $('#ConsumidorInput').val() || `Consumidor ${id}`,
+                Fecha: new Date().toISOString(),
+                Abonado: []
             };
         }
 
-        agrupadoPorConsumidor[id].productos.push({
-            Codigo: reg.idProducto,
-            Descripcion: reg.producto,
-            Cantidad: reg.cantidad,
-            PrecioUnitario: reg.precio
+        agrupadoPorConsumidor[id].Abonado.push({
+            Id: reg.id,
+            FechaAbono: reg.fechaAbono,
+            AbonoDeuda: reg.abonado,
         });
     });
 
@@ -299,7 +296,7 @@ $('#imprimir').on('click', function (e) {
 
         consumidores.forEach((reciboData, index) => {
             $.ajax({
-                url: '/Cotizacion/ImprimirRecibos',
+                url: '/Cotizacion/ImprimirAbonos',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(reciboData),

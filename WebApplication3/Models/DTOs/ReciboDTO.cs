@@ -6,5 +6,6 @@
         public string Direccion { get; set; }
         public DateTime Fecha { get; set; }
         public List<ProductoDTO> Productos { get; set; }
+        public List<Abono> Abonado { get; set; }
     }
 }

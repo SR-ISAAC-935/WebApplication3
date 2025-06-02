@@ -79,11 +79,16 @@ $("#Ventas").on("click", function (e) {
 
     console.log("Ventas a enviar:", ventas);
 
+    const request = {
+        ConsumidoresJson: JSON.stringify(ventas),
+        DeudaTotal: ventas.reduce((acc, v) => acc + v.Deuda, 0)
+    };
+
     $.ajax({
         url: '/Ventas/RealizarVenta',
         type: "POST",
         contentType: "application/json",
-        data: JSON.stringify(ventas),
+        data: JSON.stringify(request),
         success: function (data) {
             alert(data.mensaje);
         },
@@ -92,6 +97,7 @@ $("#Ventas").on("click", function (e) {
             console.log(`Hubo un error: ${xhr.responseText}`)
         }
     });
+
 });
 
 
@@ -101,7 +107,7 @@ $('form').on('submit', function (e) {
     var consumidoresJson = JSON.stringify(registros);
     var deudaTotal = registros.reduce((acc, reg) => acc + reg.deuda, 0);
     console.log(consumidoresJson)
-   /*$.ajax({
+   $.ajax({
         url: $(this).attr('action'),
         method: $(this).attr('method'),
         contentType: 'application/json',
@@ -112,5 +118,5 @@ $('form').on('submit', function (e) {
         error: function () {
             alert('Error al realizar la venta');
         }
-    });*/
+    });
 });

@@ -24,16 +24,6 @@
         <input type="hidden" asp-for="IdConsumidor" id="IdConsumidor" />
         <span asp-validation-for="IdConsumidor" class="text-danger"></span>
     </div>
-
-    <!-- Desplegable de estados -->
-    <div class="form-group">
-        <label for="IdEstado">Estado del Deudor</label>
-        <select asp-for="IdEstado" asp-items="ViewBag.Estados" class="form-control" id="IdEstado">
-            <option value="">Seleccione un estado</option>
-        </select>
-        <span asp-validation-for="IdEstado" class="text-danger"></span>
-    </div>
-
     <!-- Desplegable de productos (autocompletar) -->
     <div class="form-group">
         <label for="IdProducto">Producto</label>
@@ -224,16 +214,7 @@
                     });//
                            const IdEstado = document.getElementById('IdEstado'); // Asegúrate de que el id en HTML sea 'IdEstado'
 
-                IdEstado.addEventListener('change', function() { // O puedes usar () => {}
-                    const estadoId = IdEstado.value; // Asegúrate de usar 'estadoId' en todo el código
-                    if (estadoId) {
-                       
-                    } else {
-                        alert('No se ha seleccionado un estado');
-                    }
-                });
-
-                              ;
+       
                           $('form').on('submit', function (e) {
 
                     // Convertir registros a JSON

@@ -7,6 +7,7 @@ using WebApplication3.Custom;
 using WebApplication3.Models;
 using WebApplication3.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 namespace WebApplication3.Controllers
 {
     [Authorize]
@@ -27,9 +28,22 @@ namespace WebApplication3.Controllers
 
             return View();
         }
-        public IActionResult GestionDeudas()
+        public async Task<IActionResult> GestionDeudas()
         {
-            return View();
+            var listaNegra =await (from ln in lumitecContext.ListaNegras
+                                   join c in lumitecContext.Consumidores on ln.IdConsumidor equals c.IdConsumidor
+                                   join es in lumitecContext.EstadosDeudores on ln.IdEstado equals es.IdEstado
+                                   where ln.IdEstado == 1 // Estado activo
+                                   select new ListadoNegraDTO
+                                   {
+                                       IdListaNegra = ln.IdListado,
+                                       NombreConsumidor = c.NombreConsumidor,
+                                       Deuda = ln.Deuda,
+                                       FechaCreacion = ln.FechaVenta,
+                                       IdEstado = (int)ln.IdEstado,
+                                       Estado = es.Descripcion
+                                   }).ToListAsync();
+            return View(listaNegra);
         }
 
         public IActionResult CancelarProductos()
