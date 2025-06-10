@@ -26,7 +26,7 @@ namespace WebApplication3.Custom
             }
             foreach (var det in detalles)
             {
-                Console.WriteLine(det.IdConsumidor);
+                Console.WriteLine(det.IdConsumidor+"\n"+det.idComprador);
             }
 
             var detallesTable = new DataTable();
@@ -47,6 +47,7 @@ namespace WebApplication3.Custom
                 {
                     command.CommandType = CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@IdConsumidor", detalles[0].IdConsumidor);
+                    command.Parameters.AddWithValue("@IdComprador", detalles[0].idComprador);
                     command.Parameters.AddWithValue("@Deuda", deudaTotal);
                     command.Parameters.AddWithValue("@Detalles", detallesTable).SqlDbType = SqlDbType.Structured;
                     command.Parameters.AddWithValue("@IdEstado", 1);

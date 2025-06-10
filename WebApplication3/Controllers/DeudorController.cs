@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Data;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using WebApplication3.Custom;
 using WebApplication3.Models;
 using WebApplication3.Models.DTOs;
-using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 namespace WebApplication3.Controllers
 {
     [Authorize]
@@ -55,11 +56,44 @@ namespace WebApplication3.Controllers
         {
             logger.LogInformation("Término de búsqueda: {Term}", term);
 
-            var consumidores = lumitecContext.Consumidores
-                .Where(c => c.NombreConsumidor.Contains(term))
-                .Select(c => new { idConsumidor = c.IdConsumidor, nombreConsumidor = c.NombreConsumidor })
-                .ToList();
+            var consumidores = (from c in lumitecContext.Consumidores
+                                join r in lumitecContext.ConsuElectricistas
+                                on c.IdRole equals r.Id
+                                where c.NombreConsumidor.Contains(term)
+                                select new ListaNegraDTO
+                                {
+                                    IdConsumidor = c.IdConsumidor,
+                                    NombreConsumidor = c.NombreConsumidor,
+                                    Role = r.Descripcion
+                                }).ToList();
+            foreach(var i in consumidores)
+            {
+                Console.WriteLine($"idConsumidor: {i.IdConsumidor}, nombreConsumidor: {i.NombreConsumidor}, Role: {i.Role}");
+            }
+            logger.LogDebug("Consumidores encont   rados: {Consumidores}", consumidores);
 
+            return Json(consumidores);
+        }
+        [HttpGet]
+        public IActionResult Buscar(string term)
+        {
+            logger.LogInformation("Término de búsqueda: {Term}", term);
+
+            /*  var consumidores = lumitecContext.Consumidores
+                  .Where(c => c.NombreConsumidor.Contains(term))
+                  .Select(c => new { idConsumidor = c.IdConsumidor, nombreConsumidor = c.NombreConsumidor })
+                  .ToList();
+            */
+            var consumidores = (from c in lumitecContext.Consumidores
+                                join r in lumitecContext.Roles
+                                on c.IdRole equals r.Id
+                                where c.NombreConsumidor.Contains(term)
+                                select new ListaNegraDTO
+                                {
+                                    IdConsumidor = c.IdConsumidor,
+                                    NombreConsumidor = c.NombreConsumidor,
+                                    Role = r.Rol
+                                }).ToList();
             logger.LogDebug("Consumidores encont   rados: {Consumidores}", consumidores);
 
             return Json(consumidores);
@@ -71,9 +105,13 @@ namespace WebApplication3.Controllers
 
             var productos = lumitecContext.Products
             .Where(c => c.ProductName.Contains(term))
-                .Select(c => new { idProducto = c.IdProduct, nombreProducto = c.ProductName, precioProducto = c.ProductPrices })
+                .Select(c => new { idProducto = c.IdProduct, nombreProducto = c.ProductName, precioProducto = c.ProductPrices,ProductProvider=c.ProductProvider })
                 .ToList();
-
+            foreach(var i in  productos)
+            {
+                Console.WriteLine($"idProducto: {i.idProducto}, nombreProducto: {i.nombreProducto}, precioProducto: {i.precioProducto}, ProductProvider: {i.ProductProvider}");
+            }
+            
             logger.LogDebug("Consumidores encont   rados: {Consumidores}", productos);
 
             return Json(productos);
@@ -139,7 +177,7 @@ namespace WebApplication3.Controllers
         // Método para ejecutar el procedimiento almacenado
         private async Task InsertarListaNegraConDetalles(List<DetalleListaNegraDTO> detalles, decimal deudaTotal)
         {
-            services.InsertarListaNegraConDetalles(detalles, deudaTotal);
+          await  services.InsertarListaNegraConDetalles(detalles, deudaTotal);
 
         }
         // Ejemplo del método de lógica para obtener las deudas

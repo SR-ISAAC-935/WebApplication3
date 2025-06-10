@@ -1,1 +1,58 @@
-﻿<h1> resumen de ventas</h1>
+﻿@model IEnumerable<WebApplication3.Models.RegistroVentasDTO>
+
+<h1> resumen de ventas</h1>
+
+<div class="form-group">
+    <label for="Consumidor">Consumidor</label>
+    <input type="text" id="ConsumidorInput" class="form-control" placeholder="Escribe el nombre del consumidor" />
+    <ul id="ConsumidorList" class="list-group" style="display:none;"></ul>
+    <input type="hidden" id="IdConsumidor" />
+    <span id="IdConsumidorValidation" class="text-danger"></span>
+</div>
+<button id="btnObtenerFacturas" class="btn btn-primary mt-3">Obtener productos pendientes</button>
+<div id="VentasRealizadas">
+    <h3>Ventas Realizadas</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th># Venta</th>
+                <th>Consumidor</th>
+                <th>Total</th>
+                <th>Fecha Venta</th>
+            </tr>
+        </thead>
+        <tbody id="DetallesTableBody">
+            @foreach (var deuda in Model)
+            {
+                <tr>
+                    <td>@deuda.IdSales</td>
+                    <td>@deuda.NombreConsumidor</td>
+                    <td>@deuda.Deuda</td>
+                    <td>@deuda.FechaVenta.ToString("dd/MM/yyyy")</td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+</div>
+<div id="DetallesVentas" style="display: none;">
+    <h3>Comprador </h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th># Venta</th>
+                <th>Consumidor</th>
+                <th>Total</th>
+                <th>Fecha Venta</th>
+            </tr>
+        </thead>
+        <tbody id="DetallesVentasTableBody">
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script src="~/js/Gestion.js" asp-append-version="true"></script>
+    <script src="~/js/VentasGestor.js" asp-append-version="true"></script>
+
+}

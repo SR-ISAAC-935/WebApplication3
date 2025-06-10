@@ -5,15 +5,19 @@ namespace WebApplication3.Models.DTOs
     public class ListaNegraDTO
     {
         [Required(ErrorMessage = "El ID del consumidor es obligatorio.")]
+        public int IdElectricista { get; set; }
+
+        [Required(ErrorMessage = "El ID del consumidor es obligatorio.")]
         public int IdConsumidor { get; set; }
+        public string NombreConsumidor { get; set; }
 
         [Required(ErrorMessage = "La deuda es obligatoria.")]
         [Range(0, double.MaxValue, ErrorMessage = "La deuda debe ser un valor positivo.")]
         public decimal Deuda { get; set; }
         [Required(ErrorMessage = "La fecha de venta es obligatoria.")]
         public DateTime FechaVenta { get; set; }
-
-
+        public int idrole { get; set; } // Nuevo campo para el rol del usuario
+        public string Role { get; set; }
         [Required(ErrorMessage = "El ID del producto es obligatorio.")]
         public int IdProducto { get; set; }
 

@@ -1,10 +1,26 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Azure;
+using iText.Commons.Bouncycastle.Asn1.X509;
+using iText.IO.Font.Constants;
+using iText.Kernel.Font;
+using iText.Kernel.Pdf;
+using iText.Layout.Borders;
+using iText.Layout.Element;
+using iText.Layout.Properties;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Xml.Linq;
+using WebApplication3.Custom;
+using WebApplication3.Models;
+using WebApplication3.Models.DTOs;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApplication3.Controllers
 {
+    [Authorize]
     public class FacturasController : Controller
     {
         public async Task<IActionResult> Facturacion()
@@ -77,40 +93,290 @@ namespace WebApplication3.Controllers
         }
 
         [HttpGet]
-        public async Task<string> ConsultaNit(string nit)
+        public async Task<IActionResult> ConsultaNit(string nit)
         {
-            var client = new HttpClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://api.fegora.com/contribuyente/{nit}");
-            var accessToken = HttpContext.Request.Cookies["FegoraToken"];
-            if (string.IsNullOrEmpty(accessToken))
+            if (nit == null)
             {
-                return "Error: No se encontró el token de autorización.";
+                Console.WriteLine(nit);
             }
-            else
-            {
-                Console.WriteLine($"token disponible{accessToken}");
+            else {
+                Console.WriteLine("yolo no vacio");
             }
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             try
             {
+                var client = new HttpClient();
+                var url = $"https://felplex.stage.plex.lat/api/entity/392/find/NIT/{nit}";
+
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Add("Accept", "application/json");
+                request.Headers.Add("X-Authorization", "YHuBX63N5F4uYQKwWXNjb7Mnw0PegrwyoiBFwo2wdUAbspYzk0fG4SOIVppuz5pk");
+
                 var response = await client.SendAsync(request);
                 response.EnsureSuccessStatusCode();
-                var responsebody = await response.Content.ReadAsStringAsync();
 
-                // var json = JsonDocument.Parse(responsebody);
+                var jsonResponse = await response.Content.ReadAsStringAsync();
 
-                return responsebody;
+                // Devuelve directamente el JSON como arreglo
+                return Content(jsonResponse, "application/json");
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                return $"Error al consultar la API de Fegora: {ex.Message}";
+                return StatusCode(500, new { error = "Error al consultar el NIT", detalles = ex.Message });
             }
-            catch (JsonException ex)
-            {
-                return $"Error al parsear la respuesta de la API: {ex.Message}";
-            }
-
-
         }
+       
+        [HttpPost]
+        public async Task<IActionResult> Documento([FromBody] CrearVentaRequest request)
+        {
+            if (request == null)
+                return StatusCode(500, new { mensaje = "No se envió nada" });
+            
+            try
+            {
+                var localTime = TimeZoneInfo.ConvertTimeFromUtc(
+    DateTime.UtcNow,
+    TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time")
+);
+
+                var random = new Random();
+                int randomNumber = random.Next(2, 10001); // entre 2 y 10000
+                string paddedNumber = randomNumber.ToString("D5"); // rellena con ceros hasta 5 dígitos
+                string ampm = localTime.Hour < 12 ? "am" : "pm";
+
+                string external_id = $"LUMI-{paddedNumber}{localTime:yyyyMMddHHmmss}{ampm}";
+
+                var detalles = JsonConvert.DeserializeObject<List<VentasDTO>>(request.ConsumidoresJson);
+
+                if (detalles == null || detalles.Count == 0)
+                    return BadRequest(new { mensaje = "No se encontraron detalles válidos para facturar." });
+
+                double total = detalles.Sum(d => (double)d.Deuda);
+                double total_tax = total * 0.12;
+
+                var factura = new FelplexFactura
+                {
+                    datetime_issue = TimeZoneInfo.ConvertTimeFromUtc(
+                         DateTime.UtcNow,
+                         TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time")
+                     ).ToString("yyyy-MM-ddTHH:mm:ss"),
+
+                    external_id =  external_id,
+                    items = detalles.Select(d => new Item
+                    {
+                        qty = d.Cantidad.ToString(),
+                        type = 'B', // asegurarse que sea string y mayúscula
+                        price = (double)d.Precio,
+                        description = d.ProductName
+                    }).ToList(),
+                    total = total,
+                    total_tax = total_tax,
+                    to = new Receptor
+                    {
+                        tax_code_type = "NIT",
+                        tax_code = detalles[0].nit,
+                        tax_name = detalles[0].tax_name,
+                        address = new Address
+                        {
+                            city = detalles[0].direccion
+                        }
+                    },
+                    custom_fields = new List<CustomField>
+    {
+        new CustomField { name = "IVA total incluido", value = total_tax.ToString("F2") }
+    }
+                };
+
+
+                Console.WriteLine(JsonConvert.SerializeObject(factura, Formatting.Indented));
+
+
+                var jsonBody = JsonConvert.SerializeObject(factura);
+
+                using var client = new HttpClient();
+                var req = new HttpRequestMessage(HttpMethod.Post, "https://felplex.stage.plex.lat/api/entity/392/invoices/await");
+
+                req.Headers.Add("Accept", "application/json");
+                req.Headers.Add("X-Authorization", "YHuBX63N5F4uYQKwWXNjb7Mnw0PegrwyoiBFwo2wdUAbspYzk0fG4SOIVppuz5pk");
+
+                req.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+                var response = await client.SendAsync(req);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine("respuesta"+response.ToString());
+                if (response.IsSuccessStatusCode)
+                {
+                    var felplexResponse = JsonConvert.DeserializeObject<FelplexResponse>(responseContent);
+
+                    Console.WriteLine("PDF: " + felplexResponse.invoice_url);
+                    Console.WriteLine("XML: " + felplexResponse.invoice_xml);
+
+                    // Limpiar el nombre del archivo por si contiene caracteres inválidos
+                    var fileName = string.Concat(detalles[0].tax_name.Where(c => !Path.GetInvalidFileNameChars().Contains(c)));
+
+                    var pdfBytes = await client.GetByteArrayAsync(felplexResponse.invoice_url);
+                    await System.IO.File.WriteAllBytesAsync($"{fileName}.pdf", pdfBytes);
+
+                    Console.WriteLine(felplexResponse.invoice_url);
+                    return Ok(new
+                    {
+                        mensaje = "Factura enviada correctamente",
+                        pdf = felplexResponse.invoice_url,
+                        xml = felplexResponse.invoice_xml,
+                    });
+                }
+
+                else
+                {
+                    Console.WriteLine("Error al enviar la factura: " + responseContent);
+                    return StatusCode((int)response.StatusCode, new { mensaje = "Error al enviar la factura", detalles = responseContent });
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, new { mensaje = $"Error: {ex.Message}" });
+            }
+        }
+public async Task<FacturaModel> LeerFacturaDesdeXmlUrl(string xmlUrl)
+    {
+        var httpClient = new HttpClient();
+        var xmlString = await httpClient.GetStringAsync(xmlUrl);
+
+        var xml = XDocument.Parse(xmlString);
+
+        var factura = new FacturaModel();
+
+        // Suponiendo estructura: <DatosGenerales Emision="..." NumeroAcceso="..." />
+        var datosGenerales = xml.Descendants().FirstOrDefault(x => x.Name.LocalName == "DatosGenerales");
+        if (datosGenerales != null)
+        {
+            factura.FechaEmision = DateTime.Parse(datosGenerales.Attribute("FechaHoraEmision")?.Value ?? "");
+            factura.NumeroFactura = datosGenerales.Attribute("NumeroAcceso")?.Value;
+        }
+
+        // Suponiendo estructura: <Frase TipoFrase="..." CodigoEscenario="..." />
+        factura.Frases = xml.Descendants()
+            .Where(x => x.Name.LocalName == "Frase")
+            .Select(x => new FraseModel
+            {
+                TipoFrase = x.Attribute("TipoFrase")?.Value,
+                CodigoEscenario = x.Attribute("CodigoEscenario")?.Value
+            })
+            .ToList();
+
+        // Suponiendo estructura: <Emisor NombreComercial="..." />
+        var emisor = xml.Descendants().FirstOrDefault(x => x.Name.LocalName == "Emisor");
+        factura.Emisor = emisor?.Attribute("NombreComercial")?.Value;
+
+        // Suponiendo estructura: <Receptor Nombre="..." />
+        var receptor = xml.Descendants().FirstOrDefault(x => x.Name.LocalName == "Receptor");
+        factura.Receptor = receptor?.Attribute("Nombre")?.Value;
+
+        // Suponiendo: <Totales GranTotal="..." />
+        var totales = xml.Descendants().FirstOrDefault(x => x.Name.LocalName == "Totales");
+        if (totales != null)
+        {
+            factura.Total = decimal.Parse(totales.Attribute("GranTotal")?.Value ?? "0");
+        }
+
+        return factura;
+    }
+        public static void GenerarRecibo(FacturaModel factura, MemoryStream memoryStream)
+        {
+            try
+            {
+                // Crear el documento PDF
+                PdfWriter writer = new PdfWriter(memoryStream);
+                PdfDocument pdfDocument = new PdfDocument(writer);
+                iText.Layout.Document document = new iText.Layout.Document(pdfDocument);
+
+                // Cargar la fuente estándar
+                PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+
+                // Título (puedes agregar uno si lo necesitas)
+                Paragraph titulo = new Paragraph("RECIBO DE FACTURA")
+                    .SetFont(font)
+                    .SetFontSize(14)
+                    .SetTextAlignment(TextAlignment.CENTER);
+                document.Add(titulo);
+
+                // Fecha de emisión
+                Paragraph fechaTexto = new Paragraph($"Fecha: {factura.FechaEmision:dd/MM/yyyy}")
+                    .SetFont(font)
+                    .SetFontSize(10)
+                    .SetTextAlignment(TextAlignment.RIGHT);
+                document.Add(fechaTexto);
+
+                // Nombre del cliente
+                Paragraph cliente = new Paragraph($"Cliente: {factura.Receptor}")
+                    .SetFont(font)
+                    .SetFontSize(10)
+                    .SetMarginTop(10);
+                document.Add(cliente);
+
+                // Dirección fija (puedes cambiarla si la sacas del XML)
+                Paragraph direccion = new Paragraph("Dirección: Asunción Mita, Jutiapa")
+                    .SetFont(font)
+                    .SetFontSize(10);
+                document.Add(direccion);
+
+                // Tabla de productos
+                Table table = new Table(new float[] { 1, 5, 3, 3 }).UseAllAvailableWidth();
+
+                table.AddHeaderCell("Cant.");
+                table.AddHeaderCell("Descripción");
+                table.AddHeaderCell("P. Unitario");
+                table.AddHeaderCell("Importe");
+
+                foreach (var item in factura.Productos)
+                {
+                    decimal importe = item.Cantidad* item.PrecioUnitario;
+
+                    table.AddCell(item.Cantidad.ToString());
+                    table.AddCell(item.Descripcion ?? "Producto sin descripción");
+                    table.AddCell(item.PrecioUnitario.ToString("F2"));
+                    table.AddCell(importe.ToString("F2"));
+                }
+
+                document.Add(table);
+
+                // Total
+                decimal total = factura.Productos.Sum(p => p.Cantidad * p.PrecioUnitario);
+                Paragraph totalTexto = new Paragraph($"Total: Q {total:F2}")
+                    .SetFont(font)
+                    .SetFontSize(10)
+                    .SetTextAlignment(TextAlignment.RIGHT);
+                document.Add(totalTexto);
+
+                // Frases (opcional)
+                if (factura.Frases?.Any() == true)
+                {
+                    Paragraph frase = new Paragraph("Frases:")
+                        .SetFont(font)
+                        .SetFontSize(9)
+                        .SetMarginTop(10);
+                    document.Add(frase);
+
+                    foreach (var f in factura.Frases)
+                    {
+                        Paragraph p = new Paragraph($"- TipoFrase: {f.TipoFrase}, Escenario: {f.CodigoEscenario}")
+                            .SetFont(font)
+                            .SetFontSize(9);
+                        document.Add(p);
+                    }
+                }
+
+                document.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al generar el recibo: {ex.Message} - {ex.InnerException?.Message}");
+                throw;
+            }
+        }
+
+
+
     }
 }

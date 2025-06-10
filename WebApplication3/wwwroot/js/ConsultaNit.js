@@ -1,24 +1,140 @@
-﻿
+﻿var registros = {};
+let facturacion = {}
+var facxm = "";
+document.addEventListener('DOMContentLoaded', function () {
+    const checkboxPrecio = document.getElementById('validarPrecio');
+    const precioInput = document.getElementById('Precio');
 
+    checkboxPrecio.addEventListener('change', function () {
+        if (this.checked) {
+            precioInput.removeAttribute('readonly');
+        } else {
+            precioInput.setAttribute('readonly', 'readonly');
+        }
+    });
+
+    const checkboxNegro = document.getElementById('validarListaNegra');
+    const buttonNegro = document.getElementById('ListaNegra');
+
+    checkboxNegro.addEventListener('change', function () {
+        if (this.checked) {
+            buttonNegro.style.display = 'inline-block'; // Mostrar el botón
+        } else {
+            buttonNegro.style.display = 'none'; // Ocultar el botón
+        }
+    });
+});
+
+
+$(document).ready(function () {
+    let timer; // Usamos un timer para evitar hacer demasiadas peticiones
+
+    $('#Nit').on('input', function () {
+        clearTimeout(timer); // Reinicia el timer si el usuario sigue escribiendo
+
+        const nitValue = $(this).val().trim();
+
+        if (nitValue.length > 8) {
+            // Espera 500ms después del último input antes de hacer la petición
+          
+
+            timer = setTimeout(function () {
+                $.ajax({
+                    url: '/Facturas/ConsultaNit',
+                    method: 'GET',
+                    data: { nit: nitValue },
+                    success: function (response) {
+                        if (Array.isArray(response) && response.length > 0) {
+                            const info = response[0];
+                          
+                            facturacion = response.map(reg => ({
+                                id: reg.id,
+                                tax_code_type: reg.tax_code_type,
+                                tax_code: reg.tax_code,
+                                tax_name: reg.tax_name,
+                                name: reg.name,
+                            }))
+                           // console.log("jaja yolo",Facturacion)
+                            $("#info").text(info.tax_name).show();
+                        } else {
+                            $("#info").text(`No se encontró información para este NIT.`).show();
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = "Ocurrió un error desconocido.";
+                        try {
+                            const errorResponse = JSON.parse(xhr.responseText);
+                            message = errorResponse.error || message;
+                        } catch (e) {
+                            console.error("No se pudo parsear el error como JSON:", e);
+                        }
+                        $("#info").text(`No se encontró información para este NIT. ${message}`).show();
+                    }
+                });
+            }, 500); // Espera medio segundo desde el último input
+        } else {
+            $("#info").hide(); // Oculta el mensaje si no hay suficientes caracteres
+        }
+    });
+});
 $('form').on('submit', function (e) {
     e.preventDefault();
-    var nitValue = $('input[name="Nit"]').val().trim(); // Asegúrate de que tu input Nit tenga el atributo name="Nit"
-    console.log(nitValue.length);
-    alert(nitValue);
+
+    const registrosArray = Object.values(registros).filter(r => r.cantidad >= 1);
+    if (registrosArray.length === 0) {
+        alert("Todos los productos tienen cantidad menor a 1. Verifica los datos.");
+        return;
+    }
+    const consumidor = facturacion[0]; // asumimos solo uno para la factura
+   // console.log(consumidor.tax_code,"tax code")
+    const fechaVenta = new Date().toISOString();
+    //console.log(registros,"registros")
+    const ventas = registrosArray.map(reg => ({
+        direccion: $('#Direccion').val(),
+        nit: consumidor.tax_code,
+        IdConsumidor: reg.idConsumidor,
+        Deuda: reg.deuda,
+        FechaVenta: fechaVenta,
+        IdProducto: reg.idProducto,
+        ProductName: reg.producto,
+        Cantidad: reg.cantidad,
+        Precio: reg.precio,
+        tax_name: consumidor.tax_name
+    }));
+    console.log("nieva facturacion ", facturacion)
+    const consumidoresJson = JSON.stringify(ventas);
+    const deudaTotal = ventas.reduce((acc, reg) => acc + reg.Deuda, 0);
+
+    console.log("JSON a enviar:", ventas);
+    console.log("Deuda Total:", deudaTotal);
+    console.log("json consumidor ", consumidoresJson)
+
     $.ajax({
-        url: '/Facturas/ConsultaNit', // Cambia la URL a la acción correcta
-        method: 'GET',
-        contentType: 'application/json', // No es necesario para GET con datos en la URL
-        data: { nit: nitValue }, // Envía el valor del NIT como un parámetro en la URL
-        success: function (response) {
-            // Maneja la respuesta exitosa de tu контроллер
-            console.log("Respuesta del servidor:", response);
-           // alert("Respuesta del servidor: " + response); // Muestra la respuesta (puedes actualizar tu UI aquí)
-        },
-        error: function (error) {
-            // Maneja los errores de la petición AJAX
-            console.error("Error en la petición:", error);
-            alert("Error en la petición.");
+        url: $(this).attr('action'),
+        method: $(this).attr('method'),
+        contentType: 'application/json',
+        data: JSON.stringify({ consumidoresJson, deudaTotal }),
+        success: function (Datos) {
+            console.log(Datos.mensaje);
+            console.log(Datos.pdf)
+            console.log(Datos.mensaje.pdf)
+            if (Datos && Datos.pdf) {
+                const link = document.getElementById('FEL');
+                link.style.display = 'inline-block';
+                link.textContent = 'Ver FEL';
+                link.href = Datos.pdf; // Redirige al PDF
+                link.target = '_blank'; // Abre en nueva pestaña
+            } else {
+                const link = document.getElementById('FEL');
+                link.textContent = 'No hay FEL disponible';
+                link.removeAttribute('href');
+                link.removeAttribute('target');
+                link.style.display = 'inline-block';
+            }
+        }
+,
+        error: function () {
+            alert('Error al realizar la venta');
         }
     });
 });

@@ -1,5 +1,6 @@
 ﻿@model IEnumerable<WebApplication3.Models.ListadoNegraDTO>
 
+<h1 id="info" style="display: none"></h1>
 
     <div class="form-group">
     <label for="Consumidor">Consumidor</label>
@@ -86,7 +87,7 @@
     </table>
 </div>
 @section Scripts {
-
+    <script src="~/js/ConsultaNit.js" asp-append-version="true"></script>
     <script src="~/js/Gestion.js" asp-append-version="true"></script>
     <script src="~/js/impresiones.js" asp-append-version="true"></script>
 }

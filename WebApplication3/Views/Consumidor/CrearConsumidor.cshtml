@@ -12,7 +12,7 @@
         @TempData["Mensaje"]
     </div>
 }
-<form id="consumidoresForm" method="post">
+<form id="consumidoresForm" asp-action="CrearConsumidor" asp-controller="Consumidor" method="post">
     <div class="form-group">
         <label for="NombreConsumidor">Nombre del Consumidor</label>
         <input type="text" class="form-control" id="NombreConsumidor" placeholder="Ingrese el nombre del consumidor" />

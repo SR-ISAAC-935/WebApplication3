@@ -17,7 +17,34 @@
     </div>
 }
 
-<form asp-action="RealizarVenta" asp-controller="Ventas" method="post">
+<h1 id="info" style="display: none"></h1>
+<form>
+    <input required="true" name="Nit" id="Nit">
+    <input required="true" name="Direccion" id="Direccion">
+    <a id="FEL" style="display:none" href="#">Descargar FEL</a>
+
+</form>
+<form id="formRegistrarConsumidores" asp-action="CrearConsumidor" asp-controller="Consumidor" method="post">
+    <div class="form-group">
+        <label for="NombreConsumidor">Nombre del Consumidor</label>
+        <input type="text" class="form-control" id="NombreConsumidor" placeholder="Ingrese el nombre del consumidor" />
+    </div>
+
+    <div class="form-group">
+        <label for="Rol">Rol</label>
+        <select id="Rol" class="form-control">
+            <option value="">Seleccione un rol</option>
+        </select>
+    </div>
+
+    <button type="button" class="btn btn-info" id="agregarConsumidor">Agregar Consumidor</button>
+
+    <ul id="consumidoresList" class="mt-3"></ul>
+
+    <button type="submit" class="btn btn-primary mt-2" id="btnGuardarConsumidores">➕ Guardar Lista de Consumidores</button>
+</form>
+
+<form asp-action="Documento" asp-controller="Facturas" method="post">
     <div class="form-group">
         <label for="IdConsumidor">Consumidor</label>
         <input type="text" id="ConsumidorInput" class="form-control" placeholder="Escribe el nombre del consumidor" />
@@ -25,7 +52,13 @@
         <input type="hidden" asp-for="IdConsumidor" id="IdConsumidor" />
         <span asp-validation-for="IdConsumidor" class="text-danger"></span>
     </div>
-
+    <div class="form-group">
+        <label for="IdElectricista">Electricista</label>
+        <input type="text" id="ElectricistaInput" class="form-control" placeholder="Escribe el nombre del Electricista" />
+        <ul id="ElectricistaList" class="list-group" style="display:none;"></ul>
+        <input type="hidden" asp-for="IdElectricista" id="IdElectricista" />
+        <span asp-validation-for="IdElectricista" class="text-danger"></span>
+    </div>
     <!-- Desplegable de productos (autocompletar) -->
     <div class="form-group">
         <label for="IdProducto">Producto</label>
@@ -48,7 +81,10 @@
         <input type="checkbox" id="validarPrecio" name="validar" value="Cambia Precio" />
         <label for="validarPrecio">Permitir modificar el precio</label>
     </div>
-
+    <div class="form-group">
+        <input type="checkbox" id="validarListaNegra" name="validar" value="Cambia Precio" />
+        <label for="validarListaNegra">Permitir Crédito</label>
+    </div>
     <!-- Tabla para mostrar los registros temporales -->
     <h4>Registros en Tabla</h4>
     <table class="table table-striped">
@@ -69,9 +105,9 @@
 
     <input type="hidden" name="jsonData" id="jsonData" />
     <button type="button" class="btn btn-primary" id="agregarRegistro">Agregar Registro</button>
-    <button type="button" class="btn btn-primary" id="ListaNegra">Lista Negra</button>
+    <button type="button" class="btn btn-primary" style="display: none;" id="ListaNegra">Lista Negra</button>
     <button type="button" class="btn btn-primary" id="Ventas">Vender</button>
-    <button type="submit" class="btn btn-success">Guardar</button>
+    <button type="submit" class="btn btn-success">Facturar</button>
     <button type="button" class="btn btn-primary" id="imprimir">Imprimir recibo</button>
     <button type="button" class="btn btn-primary" id="GuardarRecibo">Guardar Cotizacion</button>
 
@@ -79,10 +115,14 @@
 
 
 @section Scripts {
+    <script src="~/js/Roles.js" asp-append-version="true"></script>
+    <script src="~/js/Consumidores.js" asp-append-version="true"></script>
+    <script src="~/js/ConsultaNit.js" asp-append-version="true"></script>
     <script src="~/js/PrediccionConsumidor.js" asp-append-version="true"></script>
     <script src="~/js/listaNegra.js" asp-append-version="true"></script>
     <script src="~/js/ManejoDeTablayPost.js" asp-append-version="true"></script>
     <script src="~/js/impresiones.js" asp-append-version="true"></script>
     <partial name="_ValidationScriptsPartial" />
+   
 }
 

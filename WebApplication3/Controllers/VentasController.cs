@@ -43,8 +43,7 @@ namespace WebApplication3.Controllers
             try
             {
                 // Deserializa ConsumidoresJson
-                var detalles = JsonConvert.DeserializeObject<List<VentasDTO>>(request.ConsumidoresJson);
-
+                var detalles = JsonConvert.DeserializeObject<List<VentasDTO>>(request.ConsumidoresJson);               
                 // Lógica de negocio (simulada con await)
                 await _ventasMethods.Vendido(detalles, request.DeudaTotal);
 

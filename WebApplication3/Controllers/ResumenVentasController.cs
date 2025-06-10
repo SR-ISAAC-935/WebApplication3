@@ -70,14 +70,46 @@ namespace WebApplication3.Controllers
             }
         }
 
-        public IActionResult Vendido()
+        public async Task<IActionResult> Vendido()
         {
             if (User.IsInRole("Trabajador"))
             {
                 TempData["MensajeError"] = "No está autorizado para acceder a esta página.";
                 return RedirectToAction("ErrorAuth", "Home");
             }
-            return View();
+            var query = await(
+                     from venta in _context.SalesClientResumes
+                     join consumidor in _context.Consumidores
+                         on venta.IdUsuario equals consumidor.IdConsumidor
+                    
+                     select new RegistroVentasDTO
+                     {
+                         IdSales = venta.IdSales,
+                         NombreConsumidor = consumidor.NombreConsumidor,
+                         Deuda = venta.Total
+                     }
+                ).ToListAsync();
+
+            return View(query);
+        }
+
+        public  List<RegistroVentasDTO> VentasElect(int idConsumidor)
+        {
+            decimal suma=_context.SalesClientResumes.Sum(v => v.Total);
+            return  (
+                from c in _context.Consumidores
+                join v in _context.SalesClientResumes
+                on c.IdConsumidor equals v.IdUsuario
+                where v.IdUsuario==idConsumidor
+                select new RegistroVentasDTO
+                {
+                IdSales =v.IdSales,
+                NombreConsumidor=c.NombreConsumidor,
+                FechaVenta=v.FechaVenta,
+                Deuda=v.Total,
+                total= suma
+                }
+                ).ToList();
         }
     }
 }

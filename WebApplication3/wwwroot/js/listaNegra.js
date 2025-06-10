@@ -99,24 +99,3 @@ $("#Ventas").on("click", function (e) {
     });
 
 });
-
-
-
-$('form').on('submit', function (e) {
-    e.preventDefault();
-    var consumidoresJson = JSON.stringify(registros);
-    var deudaTotal = registros.reduce((acc, reg) => acc + reg.deuda, 0);
-    console.log(consumidoresJson)
-   $.ajax({
-        url: $(this).attr('action'),
-        method: $(this).attr('method'),
-        contentType: 'application/json',
-        data: JSON.stringify({ consumidoresJson: consumidoresJson, deudaTotal: deudaTotal }),
-        success: function () {
-            alert('Venta realizada con éxito');
-        },
-        error: function () {
-            alert('Error al realizar la venta');
-        }
-    });
-});
