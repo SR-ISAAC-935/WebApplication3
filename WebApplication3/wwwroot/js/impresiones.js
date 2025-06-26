@@ -86,7 +86,6 @@ $('#GuardarRecibo').on('click', function (e) {
                     const blob = new Blob([data], { type: 'application/pdf' });
                     const link = document.createElement('a');
                     link.href = window.URL.createObjectURL(blob);
-                    link.download = `${fileNameBase}_C${reciboData.nombreCliente || index + 1}.pdf`;
                     link.click();
                 },
                 error: function (xhr, status, error) {

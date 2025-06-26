@@ -13,9 +13,11 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
+using System.Xml.Serialization;
 using WebApplication3.Custom;
 using WebApplication3.Models;
 using WebApplication3.Models.DTOs;
+using WebApplication3.Models.ModeladoFel;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApplication3.Controllers
@@ -188,6 +190,7 @@ namespace WebApplication3.Controllers
                 }
                 else
                 {
+                    factura.to_cf = 0; // No es consumidor final
                     factura.to = new Receptor
                     {
                         tax_code_type = "NIT",
@@ -200,17 +203,16 @@ namespace WebApplication3.Controllers
                     };
                 }
 
-                Console.WriteLine(JsonConvert.SerializeObject(factura, Formatting.Indented));
+               
 
                 var jsonBody = JsonConvert.SerializeObject(factura, new JsonSerializerSettings
                 {
                     NullValueHandling = NullValueHandling.Ignore
                 });
-
+                Console.WriteLine(jsonBody);
 
                 using var client = new HttpClient();
                 var req = new HttpRequestMessage(HttpMethod.Post, "https://app.felplex.com/api/entity/5681/invoices/await");
-
                 req.Headers.Add("Accept", "application/json");
                 req.Headers.Add("X-Authorization", "LnSTDWslTbmJ0LdoQJCy4fSkXiEwKayI3T26Q9fnzolpjdbCooCfEJzktm538riI");
                 req.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
@@ -231,7 +233,8 @@ namespace WebApplication3.Controllers
 
                     var pdfBytes = await client.GetByteArrayAsync(felplexResponse.invoice_url);
                     await System.IO.File.WriteAllBytesAsync($"{fileName}.pdf", pdfBytes);
-
+                  
+                    
                     return Ok(new
                     {
                         mensaje = "Factura enviada correctamente",
@@ -252,50 +255,6 @@ namespace WebApplication3.Controllers
             }
         }
 
-        public async Task<FacturaModel> LeerFacturaDesdeXmlUrl(string xmlUrl)
-    {
-        var httpClient = new HttpClient();
-        var xmlString = await httpClient.GetStringAsync(xmlUrl);
-
-        var xml = XDocument.Parse(xmlString);
-
-        var factura = new FacturaModel();
-
-        // Suponiendo estructura: <DatosGenerales Emision="..." NumeroAcceso="..." />
-        var datosGenerales = xml.Descendants().FirstOrDefault(x => x.Name.LocalName == "DatosGenerales");
-        if (datosGenerales != null)
-        {
-            factura.FechaEmision = DateTime.Parse(datosGenerales.Attribute("FechaHoraEmision")?.Value ?? "");
-            factura.NumeroFactura = datosGenerales.Attribute("NumeroAcceso")?.Value;
-        }
-
-        // Suponiendo estructura: <Frase TipoFrase="..." CodigoEscenario="..." />
-        factura.Frases = xml.Descendants()
-            .Where(x => x.Name.LocalName == "Frase")
-            .Select(x => new FraseModel
-            {
-                TipoFrase = x.Attribute("TipoFrase")?.Value,
-                CodigoEscenario = x.Attribute("CodigoEscenario")?.Value
-            })
-            .ToList();
-
-        // Suponiendo estructura: <Emisor NombreComercial="..." />
-        var emisor = xml.Descendants().FirstOrDefault(x => x.Name.LocalName == "Emisor");
-        factura.Emisor = emisor?.Attribute("NombreComercial")?.Value;
-
-        // Suponiendo estructura: <Receptor Nombre="..." />
-        var receptor = xml.Descendants().FirstOrDefault(x => x.Name.LocalName == "Receptor");
-        factura.Receptor = receptor?.Attribute("Nombre")?.Value;
-
-        // Suponiendo: <Totales GranTotal="..." />
-        var totales = xml.Descendants().FirstOrDefault(x => x.Name.LocalName == "Totales");
-        if (totales != null)
-        {
-            factura.Total = decimal.Parse(totales.Attribute("GranTotal")?.Value ?? "0");
-        }
-
-        return factura;
-    }
         public static void GenerarRecibo(FacturaModel factura, MemoryStream memoryStream)
         {
             try
@@ -389,8 +348,5 @@ namespace WebApplication3.Controllers
                 throw;
             }
         }
-
-
-
     }
 }

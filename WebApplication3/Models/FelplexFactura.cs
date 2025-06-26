@@ -10,11 +10,9 @@
         public List<Item> items { get; set; }
         public double total { get; set; }
         public double total_tax { get; set; }
-        public int? to_cf { get; set; } = 0;
-        public  Receptor? to { get; set; }
+        public int? to_cf { get; set; } 
+        public Receptor to { get; set; } 
 
-        public ReceptorCf? to_cf_receptor { get; set; } = null;
-        public object exempt_phrase { get; set; } = null;
         public List<CustomField> custom_fields { get; set; }
     }
 }
