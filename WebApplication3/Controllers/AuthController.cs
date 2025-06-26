@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using System.Diagnostics;
+using System.Security.Claims;
 using WebApplication3.Custom;
 using WebApplication3.Models;
 using WebApplication3.Models.DTOs;
@@ -22,6 +24,10 @@ namespace WebApplication3.Controllers
 
         public IActionResult Login()
         {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Home");
+            }
             return View();
         }
 
@@ -85,21 +91,41 @@ namespace WebApplication3.Controllers
                 // Busca el usuario en la base de datos
                 var user = await _context.Usuarios
                     .FirstOrDefaultAsync(u => u.Users == loginDTOs.Usuario && u.Passwords == _utilidades.encriptarSHA256(loginDTOs.Password));
-                var role =  _context.Roles.FirstOrDefault(u => u.Id.Equals(user.IdRole));
+
                 if (user != null)
                 {
-                    // Genera el token JWT
-                    var token = _utilidades.generarJwT(user,role);
+                    var role = _context.Roles.FirstOrDefault(u => u.Id.Equals(user.IdRole));
 
-                    // Guarda el token en una cookie segura
+                    // Genera el token JWT
+                    var token = _utilidades.generarJwT(user, role);
+
+                    // Genera el refresh token
+                    var refreshToken = _utilidades.GenerateRefreshToken();
+                    var refreshTokenExpiry = DateTime.UtcNow.AddDays(7); // Duración del refresh token
+
+                    // Guarda el refresh token en la base de datos
+                    user.RefreshToken = refreshToken;
+                    user.RefreshTokenExpiryTime = refreshTokenExpiry;
+                    await _context.SaveChangesAsync();
+
+                    // Guarda el access token en una cookie segura
                     Response.Cookies.Append("AppAuthToken", token, new CookieOptions
                     {
-                        HttpOnly = true, // La cookie no estará disponible para JavaScript (previene XSS)
-                        Secure = false,  // Requiere HTTPS (asegúrate de estar en producción con HTTPS)
-                        SameSite = SameSiteMode.Strict, // Previene el envío en solicitudes cruzadas
-                        Expires = DateTimeOffset.Now.AddHours(10), // Tiempo de expiración del token
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTimeOffset.UtcNow.AddHours(3),
+                        Path = "/", // Asegúrate de que la cookie esté disponible en todo el sitio
                     });
-                    Console.WriteLine(token);
+
+                    // Guarda el refresh token en una cookie segura también (opcional)
+                    Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTimeOffset.UtcNow.AddDays(7)
+                    });
 
                     TempData["SuccessMessage"] = "Inicio de sesión exitoso";
                     return RedirectToAction("Index", "Home");
@@ -114,13 +140,60 @@ namespace WebApplication3.Controllers
                 TempData["ErrorMessage"] = "Ocurrió un error al procesar la solicitud";
                 return View();
             }
-
         }
-        public IActionResult logout()
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] TokenRequest tokenRequest)
         {
-            HttpContext.Session.Remove("AppAuthToken");
-            return RedirectToAction("login", "Auth");
+            var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.RefreshToken == tokenRequest.RefreshToken);
+
+            if (user == null || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+                return Unauthorized("Refresh token inválido o expirado");
+
+            var role = _context.Roles.FirstOrDefault(u => u.Id.Equals(user.IdRole));
+
+            var newAccessToken = _utilidades.generarJwT(user, role);
+            var newRefreshToken = _utilidades.GenerateRefreshToken();
+
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            await _context.SaveChangesAsync();
+
+            return Ok(new AuthResponse
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken] // Recomendado si usas formularios
+        public async Task<IActionResult> Logout()
+        {
+            // Obtener el usuario actual usando el token (si lo tienes en contexto)
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var user = await _context.Usuarios.FindAsync(int.Parse(userId));
+                if (user != null)
+                {
+                    // Revocar el refresh token (lo invalidamos)
+                    user.RefreshToken = null;
+                    user.RefreshTokenExpiryTime = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            // Borrar cookies (access token y refresh token)
+            Response.Cookies.Delete("AppAuthToken");
+            Response.Cookies.Delete("RefreshToken");
+
+            // (Opcional) cerrar la sesión por si estás usando Session también
+            HttpContext.Session.Clear();
+
+            return RedirectToAction("Login", "Auth");
+        }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

@@ -74,6 +74,7 @@ $("#btnObtenerFacturas").on("click", function () {
                         </tr>
                     `);
             });
+            actualizarTotalEnTabla();
             $("#DeudasContainer").show();
         })
         .fail(() => showError("Error al obtener las deudas."))
@@ -153,21 +154,22 @@ $("#DeudasTableBody").on("click", ".btn-detalles", function () {
         type: "GET",
         data: { idListado },
     })
-        .done(function (data) {
+        .done(function (detalles) {
             const tbody = $("#DetallesTableBody");
             tbody.empty();
-
-            if (!data || data.length === 0) {
+            console.log(detalles);
+            if (!detalles || detalles.length === 0) {
                 alert("No se encontraron detalles para esta deuda.");
                 $("#DetallesContainer").hide();
                 return;
             }
-            console.log("Detalles de deuda:", data.datos);
-            detallesAbono = Array.isArray(data) ? data : [];
+            console.log("Detalles de deuda:", detalles.datos);
+            detallesAbono = Array.isArray(detalles) ? detalles : [];
             console.log("Detalles de abono:", detallesAbono);
-            data.forEach(d => {
+            detalles.forEach((d, index) => {
                 tbody.append(`
                         <tr>
+                            <td>${index + 1}</td>
                             <td>${d.producto}</td>
                             <td>${d.cantidad}</td>
                             <td>${d.precio.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
@@ -176,6 +178,7 @@ $("#DeudasTableBody").on("click", ".btn-detalles", function () {
                         </tr>
                     `);
             });
+            actualizarTotalEnTabla();
             $("#DetallesContainer").show();
         })
         .fail(() => showError("Error al obtener los detalles de la deuda."));
@@ -217,7 +220,7 @@ $("#DeudasTableBody").on("click", ".btn-AbonoDetalles", function () {
                 </tr>
             `);
             });
-
+            actualizarTotalEnTabla();
             $("#AbonosContainer").show();
 
             // Mostrar en consola para verificar
@@ -320,3 +323,26 @@ $('#imprimir').on('click', function (e) {
         $(this).remove();
     });
 });
+
+function calcularTotalDeuda() {
+    var total = 0;
+    for (let clave in registros) {
+        total += registros[clave].deuda;
+    }
+    return total;
+}
+
+function actualizarTotalEnTabla() {
+    // Elimina fila de total anterior si ya existe
+    $('#filaTotal').remove();
+
+    var total = calcularTotalDeuda();
+    if (total > 0) {
+        $('#DetallesTableBody').append(`
+<tr id="filaTotal">
+    <td colspan="4" class="text-end"><strong>Total</strong></td>
+    <td><strong>${total.toFixed(2)}</strong></td>
+    <td></td>
+</tr>`);
+    }
+}

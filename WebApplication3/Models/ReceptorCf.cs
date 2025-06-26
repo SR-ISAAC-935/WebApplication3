@@ -1,10 +1,8 @@
 ﻿namespace WebApplication3.Models
 {
-    public class Receptor
+    public class ReceptorCf
     {
         public string tax_code_type { get; set; } = "NIT";
-        public string? tax_code { get; set; }
-        public string? tax_name { get; set; } 
         public Address address { get; set; }
     }
 }

@@ -105,11 +105,11 @@ namespace WebApplication3.Controllers
 
             var productos = lumitecContext.Products
             .Where(c => c.ProductName.Contains(term))
-                .Select(c => new { idProducto = c.IdProduct, nombreProducto = c.ProductName, precioProducto = c.ProductPrices,ProductProvider=c.ProductProvider })
+                .Select(c => new { idProducto = c.IdProduct, nombreProducto = c.ProductName, precioProducto = c.ProductPrices,ProductProvider=c.ProductProvider, stock= c.ProductStock })
                 .ToList();
             foreach(var i in  productos)
             {
-                Console.WriteLine($"idProducto: {i.idProducto}, nombreProducto: {i.nombreProducto}, precioProducto: {i.precioProducto}, ProductProvider: {i.ProductProvider}");
+                Console.WriteLine($"idProducto: {i.idProducto}, nombreProducto: {i.nombreProducto}, precioProducto: {i.precioProducto}, ProductProvider: {i.ProductProvider} stock:{i.stock}");
             }
             
             logger.LogDebug("Consumidores encont   rados: {Consumidores}", productos);
@@ -153,6 +153,7 @@ namespace WebApplication3.Controllers
                 .SelectMany(c => c.Productos.Select(p => new DetalleListaNegraDTO
                 {
                     IdConsumidor = c.IdConsumidor,
+                    idElectricista = c.IdElectricista, // Asignar el idElectricista desde el consumidor
                     IdProducto = p.IdProducto,
                     Cantidad = p.Cantidad,
                     Precio = p.Precio,
@@ -162,7 +163,7 @@ namespace WebApplication3.Controllers
 
             foreach (var det in detalles)
             {
-                Console.WriteLine($"id{det.IdConsumidor} Producto ID: {det.IdProducto}, Cantidad: {det.Cantidad}, Precio: {det.Precio}");
+                Console.WriteLine($"id{det.IdConsumidor} Producto ID: {det.IdProducto}, Cantidad: {det.Cantidad}, Precio: {det.Precio} , idelectricista{det.idElectricista}");
             }
 
             await services.InsertarListaNegraConDetalles(detalles, request.DeudaTotal);
@@ -175,11 +176,11 @@ namespace WebApplication3.Controllers
 
 
         // Método para ejecutar el procedimiento almacenado
-        private async Task InsertarListaNegraConDetalles(List<DetalleListaNegraDTO> detalles, decimal deudaTotal)
+       /* private async Task InsertarListaNegraConDetalles(List<DetalleListaNegraDTO> detalles, decimal deudaTotal)
         {
           await  services.InsertarListaNegraConDetalles(detalles, deudaTotal);
 
-        }
+        }*/
         // Ejemplo del método de lógica para obtener las deudas
         public List<DeudaDTO> ObtenerDeudasPorConsumidor(int idConsumidor)
         {
@@ -254,7 +255,7 @@ namespace WebApplication3.Controllers
                 }
                 foreach (var detalle in detalles)
                 {
-                    Console.WriteLine($" los detalles son {detalle.id} {detalle.name} {detalle.Abonado} {detalle.FechaAbono} {detalle.total}");
+                    Console.WriteLine($" los detalles son {detalle.id} {detalle.name} {detalle.Abonado} {detalle.nameElec} {detalle.FechaAbono} {detalle.total}");
                 }
                 if (detalles.Count == 0)
                 {
@@ -291,8 +292,8 @@ namespace WebApplication3.Controllers
 
                 foreach (var detalle in detalles)
                 {
-                    logger.LogInformation("Producto: {Producto}, Cantidad: {Cantidad}, Precio: {Precio}, Total: {Total}",
-                        detalle.Producto, detalle.Cantidad, detalle.Precio, detalle.Total);
+                    logger.LogInformation("Producto: {Producto}, Cantidad: {Cantidad}, Precio: {Precio}, electricista:{electricista},consumidor:{consmidor} ,Total: {Total}",
+                        detalle.Producto, detalle.Cantidad, detalle.Precio,detalle.electricista, detalle.consumidor, detalle.Total);
                    
                 }
 
@@ -321,7 +322,7 @@ namespace WebApplication3.Controllers
             foreach (var detalle in detalles)
             {
 
-                Console.WriteLine($" los detalles en el servicio  son {detalle.id} {detalle.name} {detalle.Abonado} {detalle.FechaAbono} {detalle.total}");
+                Console.WriteLine($" los detalles en el servicio  son {detalle.id} {detalle.name} {detalle.nameElec} {detalle.Abonado} {detalle.FechaAbono} {detalle.total}");
             }
          
             return services.ObtenerAbono(idListado);

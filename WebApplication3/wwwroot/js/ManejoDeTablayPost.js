@@ -2,22 +2,24 @@
 var registros = {};
 var tempIdProducto = null;
 var tempIdConsumidor = null;
-
+var tempIdElectricista = null;
 // Función para agregar un nuevo registro
 $('#agregarRegistro').on('click', function (e) {
     e.preventDefault();
     try {
         // Obtener valores de los campos
         var consumidor = $('#ConsumidorInput').val().trim();
+        var electricista = $('#ElectricistaInput').val().trim();
+        var idElectricista = tempIdElectricista
         var idConsumidor = tempIdConsumidor;
         var producto = $('#ProductoInput').val().trim();
         var idProducto = tempIdProducto;
         var cantidad = parseFloat($('#Cantidad').val()) || 0;
         var precio = parseFloat($('#Precio').val()) || 0;
         var deuda = cantidad * precio;
-
+        console.log($`consu${consumidor}, elec${idElectricista}`);
         // Validaciones
-        if (!idConsumidor || !idProducto || cantidad <= 0 || precio <= 0 || isNaN(cantidad) || isNaN(precio)) {
+        if (cantidad <= 0 || precio <= 0 || isNaN(cantidad) || isNaN(precio)) {
             alert('Por favor, completa los campos correctamente.');
             return;
         }
@@ -37,7 +39,7 @@ $('#agregarRegistro').on('click', function (e) {
         } else {
             // Crear un nuevo registro
             var idUnico = Date.now();
-            registros[clave] = { id: idUnico, idConsumidor, idProducto, producto, cantidad, precio, deuda };
+            registros[clave] = { id: idUnico, idConsumidor, idElectricista, idProducto, producto, cantidad, precio, deuda };
 
             // Añadir una nueva fila a la tabla
             $('#tablaRegistros').append(`
@@ -54,7 +56,7 @@ $('#agregarRegistro').on('click', function (e) {
     <td><button type="button" class="btn btn-danger btn-sm eliminarRegistro">Eliminar</button></td>
 </tr>
 `);
-
+            actualizarTotalEnTabla();
 
         }
         // Limpiar los campos de entrada
@@ -64,6 +66,28 @@ $('#agregarRegistro').on('click', function (e) {
         alert('Ocurrió un error al agregar el registro.');
     }
 });
+function calcularTotalDeuda() {
+    var total = 0;
+    for (let clave in registros) {
+        total += registros[clave].deuda;
+    }
+    return total;
+}
+
+function actualizarTotalEnTabla() {
+    // Elimina fila de total anterior si ya existe
+    $('#filaTotal').remove();
+
+    var total = calcularTotalDeuda();
+    if (total > 0) {
+        $('#tablaRegistros').append(`
+<tr id="filaTotal">
+    <td colspan="4" class="text-end"><strong>Total</strong></td>
+    <td><strong>${total.toFixed(2)}</strong></td>
+    <td></td>
+</tr>`);
+    }
+}
 
 // Función para actualizar una fila en la tabla
 function actualizarFila(fila, registro) {

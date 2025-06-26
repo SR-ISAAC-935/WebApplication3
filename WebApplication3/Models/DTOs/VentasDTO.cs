@@ -13,7 +13,7 @@ namespace WebApplication3.Models.DTOs
         public required string tax_name { get; set; }
         public int idrole { get; set; } // Nuevo campo para el rol del usuario
 
-        [Required(ErrorMessage = "El ID del consumidor es obligatorio.")]
+       // [Required(ErrorMessage = "El ID del consumidor es obligatorio.")]
         public int IdConsumidor { get; set; }
 
         [Required(ErrorMessage = "La deuda es obligatoria.")]
@@ -23,7 +23,7 @@ namespace WebApplication3.Models.DTOs
         public DateTime FechaVenta { get; set; }
 
 
-        [Required(ErrorMessage = "El ID del producto es obligatorio.")]
+       // [Required(ErrorMessage = "El ID del producto es obligatorio.")]
         public int IdProducto { get; set; }
 
         [Required(ErrorMessage = "La cantidad es obligatoria.")]

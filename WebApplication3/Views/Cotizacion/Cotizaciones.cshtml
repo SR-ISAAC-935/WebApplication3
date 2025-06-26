@@ -58,8 +58,10 @@
         <span asp-validation-for="IdElectricista" class="text-danger"></span>
     </div>
     <!-- Desplegable de productos (autocompletar) -->
+    <label id="dispo"></label>
     <div class="form-group">
         <label for="IdProducto">Producto</label>
+        
         <input type="text" id="ProductoInput" class="form-control" placeholder="Escribe el nombre del producto" />
         <ul id="ProductoList" class="list-group" style="display:none;"></ul>
         <input type="hidden" asp-for="IdProducto" id="IdProducto" />

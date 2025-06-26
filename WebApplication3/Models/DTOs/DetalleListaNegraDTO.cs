@@ -3,7 +3,7 @@
     public class DetalleListaNegraDTO
     {
         public int IdConsumidor { get; set; }
-        public int idComprador { get; set; }
+        public int idElectricista { get; set; }
         public int IdProducto { get; set; }
         public int Cantidad { get; set; }
         public decimal Precio { get; set; }

@@ -28,8 +28,15 @@ namespace WebApplication3.Custom
 
             }
         }
+        public string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[64];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
 
-        public string generarJwT(Usuario user,Role role)
+       /* public string generarJwT(Usuario user,Role role)
         {
             var claims = new[]
             {
@@ -46,13 +53,37 @@ namespace WebApplication3.Custom
             var token = new JwtSecurityToken(
                 issuer: _config["JWT:Issuer"],
                 audience: _config["JWT:Audience"],
+                
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
+                expires: DateTime.UtcNow.AddHours(8),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+        }*/
+        public string generarJwT(Usuario usuario, Role role)
+        {
+            var claims = new[]
+            {
+        new Claim(ClaimTypes.NameIdentifier, usuario.IdUser.ToString()),
+        new Claim(ClaimTypes.Name, usuario.Users),
+        new Claim(ClaimTypes.Role, role.Rol),
+        new Claim(JwtRegisteredClaimNames.Sub, usuario.Users),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
 
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _config["JWT:Issuer"],        // ← esto debe estar definido
+                audience: _config["JWT:Audience"],    // ← esto también
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
 
     }
 }

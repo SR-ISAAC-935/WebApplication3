@@ -7,7 +7,7 @@
         public decimal Deuda { get; set; }
         public DateOnly FechaVenta { get; set; }
         public string NombreConsumidor { get; set; }
-        
+        public string nombreElectricista { get; set; }
         public decimal total { get; set; }
     }
 }

@@ -9,6 +9,8 @@ public partial class SalesClientResume
 
     public int IdUsuario { get; set; }
 
+    public string NombreConsumidor { get; set; } = null!;
+    public string NombreElectricista { get; set; } = null!;
     public decimal Total { get; set; }
 
     public DateOnly FechaVenta { get; set; }

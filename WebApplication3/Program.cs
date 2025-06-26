@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+Ôªøusing Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using WebApplication3.Controllers.Servicesxml;
 using WebApplication3.Custom;
 using WebApplication3.Models;
 
@@ -10,8 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
-// ConfiguraciÛn del DbContext como Scoped (el valor por defecto)
+builder.Services.AddHttpClient();
+// Configuraci√≥n del DbContext como Scoped (el valor por defecto)
 builder.Services.AddDbContext<LumitecContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("CadenaSQL"));
@@ -21,27 +22,66 @@ builder.Services.AddDbContext<LumitecContext>(options =>
 builder.Services.AddScoped<Utilidades>();
 builder.Services.AddScoped<ClsListaNegraMetodos>();
 builder.Services.AddScoped<VentasMethods>();
+builder.Services.AddScoped<ServiceXmls>();
 builder.Services.AddSession();
 
-// ConfiguraciÛn de la autenticaciÛn con JWT
+// Configuraci√≥n de la autenticaci√≥n con JWT
 builder.Services.AddAuthentication(config =>
 {
     config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     config.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(config =>
+
 {
+    config.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["JWT:Issuer"],
+
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["JWT:Audience"],
+
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                builder.Configuration["JWT:Key"]!)),
+
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+
+    config.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"üî¥ Auth failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine("‚úÖ Token validado correctamente");
+            return Task.CompletedTask;
+        },
+        OnMessageReceived = context =>
+        {
+            context.Token = context.Request.Cookies["AppAuthToken"];
+            return Task.CompletedTask;
+        }
+    };
     config.RequireHttpsMetadata = true;
     config.SaveToken = true;
     config.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidateAudience = true,
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero,
+        ValidIssuer = builder.Configuration["JWT:Issuer"],
+        ValidAudience = builder.Configuration["JWT:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]!))
     };
-    // MantÈn la configuraciÛn de Events para leer desde la cookie
+
+    // Mant√©n la configuraci√≥n de Events para leer desde la cookie
     config.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -60,8 +100,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication(); // Habilitar autenticaciÛn
-app.UseAuthorization();  // Habilitar autorizaciÛn
+app.UseHttpsRedirection(); // Redirecci√≥n HTTPS
+app.UseAuthentication(); // Habilitar autenticaci√≥n
+app.UseAuthorization();  // Habilitar autorizaci√≥n
 app.UseSession();
 
 // Definir las rutas

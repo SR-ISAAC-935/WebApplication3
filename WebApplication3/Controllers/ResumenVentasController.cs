@@ -33,21 +33,26 @@ namespace WebApplication3.Controllers
                 var hoy = DateOnly.FromDateTime(DateTime.Today);
 
                 var query = await (
-                     from venta in _context.SalesClientResumes
-                     join consumidor in _context.Consumidores
-                         on venta.IdUsuario equals consumidor.IdConsumidor
-                     where venta.FechaVenta == hoy
-                     select new SalesClientResumeDTO
-                     {
-                        IdSales= venta.IdSales,
-                        NombreCOnsumidor=consumidor.NombreConsumidor,
-                        Total= venta.Total
-                        
+     from venta in _context.SalesClientResumes
+     join consumidor in _context.Consumidores
+         on venta.IdUsuario equals consumidor.IdConsumidor
+     join electricista in _context.Consumidores
+         on venta.IdConsumidor equals electricista.IdConsumidor
+     where venta.FechaVenta == hoy
+     select new SalesClientResumeDTO
+     {
+         IdSales = venta.IdSales,
+         nombreElectricista =electricista.NombreConsumidor,
+         NombreCOnsumidor = consumidor.NombreConsumidor,
+         Total = venta.Total
+     }
+ ).ToListAsync();
 
-                     }
-                ).ToListAsync();
 
-
+                foreach (var al in query)
+                {
+                    Console.WriteLine($"info qury{al.nombreElectricista}");
+                }
 
                 //var query = await _context.SalesClientResumes
                 //    .Where(f => f.FechaVenta == hoy)
@@ -78,18 +83,27 @@ namespace WebApplication3.Controllers
                 return RedirectToAction("ErrorAuth", "Home");
             }
             var query = await(
-                     from venta in _context.SalesClientResumes
-                     join consumidor in _context.Consumidores
-                         on venta.IdUsuario equals consumidor.IdConsumidor
-                    
-                     select new RegistroVentasDTO
-                     {
-                         IdSales = venta.IdSales,
-                         NombreConsumidor = consumidor.NombreConsumidor,
-                         Deuda = venta.Total
-                     }
-                ).ToListAsync();
+                    from venta in _context.SalesClientResumes
+                    join electricista in _context.Consumidores
+                        on venta.IdConsumidor equals electricista.IdConsumidor
+                    join consumidor in _context.Consumidores
+                        on venta.IdUsuario equals consumidor.IdConsumidor
+                  
+                    select new RegistroVentasDTO
+                    {
+                        IdSales = venta.IdSales,
+                        NombreConsumidor = consumidor.NombreConsumidor,
+                        nombreElectricista = electricista.NombreConsumidor,
+                        Deuda = venta.Total,
+                        FechaVenta = venta.FechaVenta,
+                    }
 
+
+                ).ToListAsync();
+            foreach (var i in query)
+            {
+                Console.WriteLine(i.FechaVenta);
+            }
             return View(query);
         }
 
@@ -113,3 +127,4 @@ namespace WebApplication3.Controllers
         }
     }
 }
+// https://felplex.stage.plex.lat/xml/D82C53AA-1189-41E0-BA80-60583F5A92D7

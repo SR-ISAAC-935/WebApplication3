@@ -26,7 +26,7 @@ namespace WebApplication3.Custom
             }
             foreach (var det in detalles)
             {
-                Console.WriteLine(det.IdConsumidor+"\n"+det.idComprador);
+                Console.WriteLine(det.IdConsumidor+"\n"+det.idElectricista);
             }
 
             var detallesTable = new DataTable();
@@ -46,8 +46,8 @@ namespace WebApplication3.Custom
                 using (var command = new SqlCommand("dbo.InsertarListaNegraConDetalles", connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@IdConsumidor", detalles[0].IdConsumidor);
-                    command.Parameters.AddWithValue("@IdComprador", detalles[0].idComprador);
+                    command.Parameters.AddWithValue("@IdConsumidor", detalles[0].idElectricista);
+                    command.Parameters.AddWithValue("@IdComprador", detalles[0].IdConsumidor);
                     command.Parameters.AddWithValue("@Deuda", deudaTotal);
                     command.Parameters.AddWithValue("@Detalles", detallesTable).SqlDbType = SqlDbType.Structured;
                     command.Parameters.AddWithValue("@IdEstado", 1);
@@ -109,11 +109,21 @@ namespace WebApplication3.Custom
             return (from d in _context.DetalleListaNegra
                     join p in _context.Products
                         on d.IdProducto equals p.IdProduct
+                    join l in _context.ListaNegras
+                     on d.IdListado equals l.IdListado
+                    join c in _context.Consumidores
+                    on l.IdConsumidor equals c.IdConsumidor
+                    join elec in _context.Consumidores
+                    on c.IdRole equals 1
+                    join cons in _context.Consumidores
+                    on c.IdRole equals 2
                     join e in _context.EstadosDeudores
                         on d.IdEstado equals e.IdEstado
                     where d.IdListado == idListado
                     select new DetalleDeudaDTO
                     {
+                        consumidor = cons.NombreConsumidor,
+                        electricista = elec.NombreConsumidor,
                         Producto = p.ProductName,
                         Cantidad = d.Cantidad,
                         Precio = d.Precio,
@@ -126,29 +136,36 @@ namespace WebApplication3.Custom
 
         public List<AbonoDTO> ObtenerAbono(int idListado)
         {
-            var totalDeuda=_context.ListaNegras
-                .Where(x=>x.IdListado == idListado).Select(x=>x.Deuda).FirstOrDefault();
-            // Calcular la suma total de abonos para ese idListado
+            var totalDeuda = _context.ListaNegras
+                .Where(x => x.IdListado == idListado)
+                .Select(x => x.Deuda)
+                .FirstOrDefault();
+
             var totalAbonos = _context.Abonos
                 .Where(x => x.FacturaDeuda == idListado)
                 .Sum(x => x.AbonoDeuda);
 
-            // Obtener los detalles individuales de abonos
-            var resultado = (from d in _context.ListaNegras
-                             join a in _context.Abonos on d.IdListado equals a.FacturaDeuda
-                             join c in _context.Consumidores on a.IdUsuario equals c.IdConsumidor
-                             where a.FacturaDeuda == idListado
-                             select new AbonoDTO
-                             {
-                                 id = d.IdListado,
-                                 name = c.NombreConsumidor,
-                                 Abonado = a.AbonoDeuda,
-                                 FechaAbono = a.FechaAbono,
-                                 total = totalAbonos+totalDeuda // se repite el total en cada fila (o podrías hacerlo solo en la primera)
-                             }).ToList();
+            var resultado = (
+    from d in _context.ListaNegras
+    join a in _context.Abonos on d.IdListado equals a.FacturaDeuda
+    join electricista in _context.Consumidores on a.IdUsuario equals electricista.IdConsumidor
+    join consumidor in _context.Consumidores on d.IdConsumidor equals consumidor.IdConsumidor
+
+    where a.FacturaDeuda == idListado
+    select new AbonoDTO
+    {
+        id = d.IdListado,
+        name = consumidor.NombreConsumidor,         // nombre del deudor
+        nameElec = electricista.NombreConsumidor,   // nombre del electricista
+        Abonado = a.AbonoDeuda,
+        FechaAbono = a.FechaAbono,
+        total = totalDeuda
+    }).ToList();
+
 
             return resultado;
         }
+
         public void ActualizarDeuda(int idListado, double abono)
         {
             if (idListado <= 0 || abono <= 0)

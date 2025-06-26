@@ -7,6 +7,7 @@
         public string name { get; set; }
         public decimal total { get; set; }
 
+        public string nameElec { get; set; }
         public decimal Abonado { get; set; }
 
         public DateTime? FechaAbono { get; set; }

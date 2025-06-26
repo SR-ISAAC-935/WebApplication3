@@ -29,16 +29,24 @@
 
 <form asp-action="Documento" asp-controller="Facturas" method="post">
     <div class="form-group">
+        <label for="IdElectricista">Electricista</label>
+        <input type="text" id="ElectricistaInput" class="form-control" placeholder="Escribe el nombre del Electricista" />
+        <ul id="ElectricistaList" class="list-group" style="display:none;"></ul>
+        <input type="hidden" asp-for=" IdElectricista" id="IdElectricista" />
+        <span asp-validation-for="IdElectricista" class="text-danger"></span>
+    </div>
+    <div class="form-group">
         <label for="IdConsumidor">Consumidor</label>
-        <input type="text" id="ConsumidorInput" class="form-control" placeholder="Escribe el nombre del consumidor" />
+        <input type="text" id="ConsumidorInput" class="form-control" placeholder="Escribe el nombre del Consumidor" />
         <ul id="ConsumidorList" class="list-group" style="display:none;"></ul>
         <input type="hidden" asp-for="IdConsumidor" id="IdConsumidor" />
         <span asp-validation-for="IdConsumidor" class="text-danger"></span>
     </div>
-
     <!-- Desplegable de productos (autocompletar) -->
+    <label id="dispo"></label>
     <div class="form-group">
         <label for="IdProducto">Producto</label>
+
         <input type="text" id="ProductoInput" class="form-control" placeholder="Escribe el nombre del producto" />
         <ul id="ProductoList" class="list-group" style="display:none;"></ul>
         <input type="hidden" asp-for="IdProducto" id="IdProducto" />

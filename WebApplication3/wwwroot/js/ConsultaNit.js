@@ -1,6 +1,7 @@
 ﻿var registros = {};
 let facturacion = {}
 var facxm = "";
+var tempcf ="";
 document.addEventListener('DOMContentLoaded', function () {
     const checkboxPrecio = document.getElementById('validarPrecio');
     const precioInput = document.getElementById('Precio');
@@ -34,7 +35,7 @@ $(document).ready(function () {
 
         const nitValue = $(this).val().trim();
 
-        if (nitValue.length > 8) {
+        if (nitValue.length > 6) {
             // Espera 500ms después del último input antes de hacer la petición
           
 
@@ -89,17 +90,26 @@ $('form').on('submit', function (e) {
    // console.log(consumidor.tax_code,"tax code")
     const fechaVenta = new Date().toISOString();
     //console.log(registros,"registros")
+    const cfnit = (
+        !Array.isArray(facturacion) || !facturacion[0]?.tax_code || facturacion[0].tax_code === "0"
+    ) ? tempcf : facturacion[0].tax_code
+    const cfconsumidor = (
+        !Array.isArray(facturacion) || !facturacion[0]?.idConsumidor || facturacion[0].idConsumidor === null
+    ) ? 1 : facturacion[0].tax_code
+    const cfconsumer = (
+        !Array.isArray(facturacion) || !facturacion[0]?.tax_name || facturacion[0].tax_name === ""
+    ) ? "" : facturacion[0].tax_name
     const ventas = registrosArray.map(reg => ({
         direccion: $('#Direccion').val(),
-        nit: consumidor.tax_code,
-        IdConsumidor: reg.idConsumidor,
+        nit: cfnit,
+        IdConsumidor: cfconsumidor,
         Deuda: reg.deuda,
         FechaVenta: fechaVenta,
         IdProducto: reg.idProducto,
         ProductName: reg.producto,
         Cantidad: reg.cantidad,
         Precio: reg.precio,
-        tax_name: consumidor.tax_name
+        tax_name: cfconsumer
     }));
     console.log("nieva facturacion ", facturacion)
     const consumidoresJson = JSON.stringify(ventas);

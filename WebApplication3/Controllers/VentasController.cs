@@ -43,9 +43,13 @@ namespace WebApplication3.Controllers
             try
             {
                 // Deserializa ConsumidoresJson
-                var detalles = JsonConvert.DeserializeObject<List<VentasDTO>>(request.ConsumidoresJson);               
+                var detalles = JsonConvert.DeserializeObject<List<VentasDTO>>(request.ConsumidoresJson);
                 // Lógica de negocio (simulada con await)
-                await _ventasMethods.Vendido(detalles, request.DeudaTotal);
+                foreach (var i in detalles)
+                { 
+                Console.WriteLine(i.IdConsumidor + "\n" + i.IdProducto + "\n" + i.Cantidad + "\n" + i.Precio+"\n"+i.IdElectricista);
+                }
+               await _ventasMethods.Vendido(detalles, request.DeudaTotal);
 
                 return StatusCode(200, new { mensaje = "Venta realizada" });
             }

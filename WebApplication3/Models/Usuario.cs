@@ -12,6 +12,7 @@ public partial class Usuario
     public string? Passwords { get; set; }
 
     public int? IdRole { get; set; }
-
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiryTime { get; set; }
     public virtual Role? IdRoleNavigation { get; set; }
 }

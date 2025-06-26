@@ -105,11 +105,11 @@ namespace WebApplication3.Controllers
             try
             {
                 var client = new HttpClient();
-                var url = $"https://felplex.stage.plex.lat/api/entity/392/find/NIT/{nit}";
+                var url = $"https://app.felplex.com/api/entity/5681/find/NIT/{nit}";
 
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Add("Accept", "application/json");
-                request.Headers.Add("X-Authorization", "YHuBX63N5F4uYQKwWXNjb7Mnw0PegrwyoiBFwo2wdUAbspYzk0fG4SOIVppuz5pk");
+                request.Headers.Add("X-Authorization", "LnSTDWslTbmJ0LdoQJCy4fSkXiEwKayI3T26Q9fnzolpjdbCooCfEJzktm538riI");
 
                 var response = await client.SendAsync(request);
                 response.EnsureSuccessStatusCode();
@@ -124,23 +124,23 @@ namespace WebApplication3.Controllers
                 return StatusCode(500, new { error = "Error al consultar el NIT", detalles = ex.Message });
             }
         }
-       
+
         [HttpPost]
         public async Task<IActionResult> Documento([FromBody] CrearVentaRequest request)
         {
             if (request == null)
                 return StatusCode(500, new { mensaje = "No se envió nada" });
-            
+
             try
             {
                 var localTime = TimeZoneInfo.ConvertTimeFromUtc(
-    DateTime.UtcNow,
-    TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time")
-);
+                    DateTime.UtcNow,
+                    TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time")
+                );
 
                 var random = new Random();
-                int randomNumber = random.Next(2, 10001); // entre 2 y 10000
-                string paddedNumber = randomNumber.ToString("D5"); // rellena con ceros hasta 5 dígitos
+                int randomNumber = random.Next(2, 10001);
+                string paddedNumber = randomNumber.ToString("D5");
                 string ampm = localTime.Hour < 12 ? "am" : "pm";
 
                 string external_id = $"LUMI-{paddedNumber}{localTime:yyyyMMddHHmmss}{ampm}";
@@ -155,22 +155,40 @@ namespace WebApplication3.Controllers
 
                 var factura = new FelplexFactura
                 {
-                    datetime_issue = TimeZoneInfo.ConvertTimeFromUtc(
-                         DateTime.UtcNow,
-                         TimeZoneInfo.FindSystemTimeZoneById("Central America Standard Time")
-                     ).ToString("yyyy-MM-ddTHH:mm:ss"),
-
-                    external_id =  external_id,
+                    datetime_issue = localTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                    external_id = external_id,
                     items = detalles.Select(d => new Item
                     {
                         qty = d.Cantidad.ToString(),
-                        type = 'B', // asegurarse que sea string y mayúscula
+                        type = 'B', // asegurarse que sea string
                         price = (double)d.Precio,
                         description = d.ProductName
                     }).ToList(),
                     total = total,
                     total_tax = total_tax,
-                    to = new Receptor
+                    custom_fields = new List<CustomField>
+            {
+                new CustomField { name = "IVA total incluido", value = total_tax.ToString("F2") }
+            }
+                };
+
+                // 👇 Verifica si hay NIT válido
+                if (string.IsNullOrEmpty(detalles[0].nit) || detalles[0].nit == "0")
+                {
+                    factura.to_cf = 1; // Consumidor final
+
+                    factura.to = new Receptor
+                    {
+                        tax_code_type = "NIT",
+                        address = new Address
+                        {
+                            city = detalles[0].direccion
+                        }
+                    };
+                }
+                else
+                {
+                    factura.to = new Receptor
                     {
                         tax_code_type = "NIT",
                         tax_code = detalles[0].nit,
@@ -179,30 +197,29 @@ namespace WebApplication3.Controllers
                         {
                             city = detalles[0].direccion
                         }
-                    },
-                    custom_fields = new List<CustomField>
-    {
-        new CustomField { name = "IVA total incluido", value = total_tax.ToString("F2") }
-    }
-                };
-
+                    };
+                }
 
                 Console.WriteLine(JsonConvert.SerializeObject(factura, Formatting.Indented));
 
+                var jsonBody = JsonConvert.SerializeObject(factura, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
 
-                var jsonBody = JsonConvert.SerializeObject(factura);
 
                 using var client = new HttpClient();
-                var req = new HttpRequestMessage(HttpMethod.Post, "https://felplex.stage.plex.lat/api/entity/392/invoices/await");
+                var req = new HttpRequestMessage(HttpMethod.Post, "https://app.felplex.com/api/entity/5681/invoices/await");
 
                 req.Headers.Add("Accept", "application/json");
-                req.Headers.Add("X-Authorization", "YHuBX63N5F4uYQKwWXNjb7Mnw0PegrwyoiBFwo2wdUAbspYzk0fG4SOIVppuz5pk");
-
+                req.Headers.Add("X-Authorization", "LnSTDWslTbmJ0LdoQJCy4fSkXiEwKayI3T26Q9fnzolpjdbCooCfEJzktm538riI");
                 req.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
                 var response = await client.SendAsync(req);
                 var responseContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("respuesta"+response.ToString());
+
+                Console.WriteLine("respuesta" + response.ToString());
+
                 if (response.IsSuccessStatusCode)
                 {
                     var felplexResponse = JsonConvert.DeserializeObject<FelplexResponse>(responseContent);
@@ -210,13 +227,11 @@ namespace WebApplication3.Controllers
                     Console.WriteLine("PDF: " + felplexResponse.invoice_url);
                     Console.WriteLine("XML: " + felplexResponse.invoice_xml);
 
-                    // Limpiar el nombre del archivo por si contiene caracteres inválidos
-                    var fileName = string.Concat(detalles[0].tax_name.Where(c => !Path.GetInvalidFileNameChars().Contains(c)));
+                    var fileName = string.Concat(detalles[0].tax_name?.Where(c => !Path.GetInvalidFileNameChars().Contains(c)) ?? "Factura");
 
                     var pdfBytes = await client.GetByteArrayAsync(felplexResponse.invoice_url);
                     await System.IO.File.WriteAllBytesAsync($"{fileName}.pdf", pdfBytes);
 
-                    Console.WriteLine(felplexResponse.invoice_url);
                     return Ok(new
                     {
                         mensaje = "Factura enviada correctamente",
@@ -224,13 +239,11 @@ namespace WebApplication3.Controllers
                         xml = felplexResponse.invoice_xml,
                     });
                 }
-
                 else
                 {
                     Console.WriteLine("Error al enviar la factura: " + responseContent);
                     return StatusCode((int)response.StatusCode, new { mensaje = "Error al enviar la factura", detalles = responseContent });
                 }
-
             }
             catch (Exception ex)
             {
@@ -238,7 +251,8 @@ namespace WebApplication3.Controllers
                 return StatusCode(500, new { mensaje = $"Error: {ex.Message}" });
             }
         }
-public async Task<FacturaModel> LeerFacturaDesdeXmlUrl(string xmlUrl)
+
+        public async Task<FacturaModel> LeerFacturaDesdeXmlUrl(string xmlUrl)
     {
         var httpClient = new HttpClient();
         var xmlString = await httpClient.GetStringAsync(xmlUrl);

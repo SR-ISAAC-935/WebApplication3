@@ -154,6 +154,7 @@ namespace WebApplication3.Custom
 
                             // Agregar parámetros
                             command.Parameters.AddWithValue("@IdUsuario", detalles[0].IdConsumidor);
+                            command.Parameters.AddWithValue("@Id_Consumidor", detalles[0].IdElectricista);
                             command.Parameters.AddWithValue("@Total", deudaTotal);
                             command.Parameters.AddWithValue("@DetalleVenta", detallesTable).SqlDbType = SqlDbType.Structured;
 
@@ -166,6 +167,7 @@ namespace WebApplication3.Custom
                     }
                     catch (Exception ex)
                     {
+                        Console.Write(ex.ToString());
                         // Revertir la transacción en caso de error
                         transaction.Rollback();
                         throw new Exception("Error al insertar la venta en la base de datos.", ex);
