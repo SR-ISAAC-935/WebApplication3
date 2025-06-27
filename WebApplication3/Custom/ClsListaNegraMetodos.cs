@@ -111,19 +111,12 @@ namespace WebApplication3.Custom
                         on d.IdProducto equals p.IdProduct
                     join l in _context.ListaNegras
                      on d.IdListado equals l.IdListado
-                    join c in _context.Consumidores
-                    on l.IdConsumidor equals c.IdConsumidor
-                    join elec in _context.Consumidores
-                    on c.IdRole equals 1
-                    join cons in _context.Consumidores
-                    on c.IdRole equals 2
                     join e in _context.EstadosDeudores
                         on d.IdEstado equals e.IdEstado
                     where d.IdListado == idListado
                     select new DetalleDeudaDTO
                     {
-                        consumidor = cons.NombreConsumidor,
-                        electricista = elec.NombreConsumidor,
+                       
                         Producto = p.ProductName,
                         Cantidad = d.Cantidad,
                         Precio = d.Precio,

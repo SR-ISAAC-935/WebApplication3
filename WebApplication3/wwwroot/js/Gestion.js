@@ -174,7 +174,7 @@ $("#DeudasTableBody").on("click", ".btn-detalles", function () {
                             <td>${d.cantidad}</td>
                             <td>${d.precio.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                             <td>${d.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                            
+                            <td>${d.status}</td>
                         </tr>
                     `);
             });

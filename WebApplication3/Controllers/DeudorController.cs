@@ -37,11 +37,12 @@ namespace WebApplication3.Controllers
                                    where ln.IdEstado == 1 // Estado activo
                                    select new ListadoNegraDTO
                                    {
+                                       IdConsumidor=c.IdConsumidor,
                                        IdListaNegra = ln.IdListado,
                                        NombreConsumidor = c.NombreConsumidor,
                                        Deuda = ln.Deuda,
                                        FechaCreacion = ln.FechaVenta,
-                                       IdEstado = (int)ln.IdEstado,
+                                       IdEstado = int.Parse( ln.IdEstado.ToString()),
                                        Estado = es.Descripcion
                                    }).ToListAsync();
             return View(listaNegra);
