@@ -78,12 +78,6 @@ namespace WebApplication3.Controllers
         public IActionResult Buscar(string term)
         {
             logger.LogInformation("Término de búsqueda: {Term}", term);
-
-            /*  var consumidores = lumitecContext.Consumidores
-                  .Where(c => c.NombreConsumidor.Contains(term))
-                  .Select(c => new { idConsumidor = c.IdConsumidor, nombreConsumidor = c.NombreConsumidor })
-                  .ToList();
-            */
             var consumidores = (from c in lumitecContext.Consumidores
                                 join r in lumitecContext.Roles
                                 on c.IdRole equals r.Id
@@ -170,20 +164,15 @@ namespace WebApplication3.Controllers
 
             return Ok(new { mensaje = "Lista negra creada con éxito." });
         }
-
-
-
-
-
-        // Método para ejecutar el procedimiento almacenado
-       /* private async Task InsertarListaNegraConDetalles(List<DetalleListaNegraDTO> detalles, decimal deudaTotal)
-        {
-          await  services.InsertarListaNegraConDetalles(detalles, deudaTotal);
-
-        }*/
         // Ejemplo del método de lógica para obtener las deudas
         public List<DeudaDTO> ObtenerDeudasPorConsumidor(int idConsumidor)
         {
+            var getser = services.ObtenerDeudasPorConsumidor(idConsumidor);
+            foreach(var allows in getser)
+            {
+                Console.WriteLine(allows.consumidor, allows.electricista);
+            }
+            Console.WriteLine(services.ObtenerDeudasPorConsumidor(idConsumidor));
             return services.ObtenerDeudasPorConsumidor(idConsumidor);
         }
 
@@ -255,7 +244,7 @@ namespace WebApplication3.Controllers
                 }
                 foreach (var detalle in detalles)
                 {
-                    Console.WriteLine($" los detalles son {detalle.id} {detalle.name} {detalle.Abonado} {detalle.nameElec} {detalle.FechaAbono} {detalle.total}");
+                    Console.WriteLine($" los detalles son {detalle.id}  {detalle.name} {detalle.Abonado} {detalle.nameElec} {detalle.FechaAbono} {detalle.total}");
                 }
                 if (detalles.Count == 0)
                 {

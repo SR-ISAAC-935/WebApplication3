@@ -1,6 +1,8 @@
 ﻿using iText.IO.Font.Constants;
+using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Pdf;
+using iText.Layout.Borders;
 using iText.Layout.Element;
 using iText.Layout.Properties;
 using Microsoft.AspNetCore.Mvc;
@@ -79,12 +81,14 @@ namespace WebApplication3.Controllers
 
             var factura = new FacturaModelo
             {
+                
                 NombreEmisor = datosEmision.Emisor.NombreEmisor,
                 NitEmisor = datosEmision.Emisor.NITEmisor,
                 DireccionEmisor = $"{datosEmision.Emisor.Direccion.Calle}, {datosEmision.Emisor.Direccion.Municipio}, {datosEmision.Emisor.Direccion.Departamento}",
                 NombreReceptor = datosEmision.Receptor.Nombre,
                 NitReceptor = datosEmision.Receptor.NIT,
                 FechaEmision = datosEmision.DatosGenerales.FechaHoraEmision,
+                NumeroAutorizacion= certificacion.NumeroAutorizacion.Autorizacion,
                 NumeroFactura = certificacion.NumeroAutorizacion.Numero,
                 Serie = certificacion.NumeroAutorizacion.Serie,
                 NumeroAcceso = datosEmision.DatosGenerales.NumeroAcceso,
@@ -117,30 +121,32 @@ namespace WebApplication3.Controllers
                 var document = new iText.Layout.Document(pdf);
 
                 var font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+                var headerTable = new Table(1).UseAllAvailableWidth(); // Una columna
 
-                // ENCABEZADO
-                document.Add(new Paragraph("Factura")
-                    .SetFont(font)
-                    .SetFontSize(16)
-                    .SetTextAlignment(TextAlignment.CENTER)
-                    .SetMarginBottom(10));
+                var headerCell = new Cell()
+                    .SetBackgroundColor(new DeviceRgb(235, 239, 254))
+                    .SetBorder(Border.NO_BORDER)
+                    .SetPadding(3)
+                   .SetFontColor(new DeviceRgb(25, 63, 230));
 
-                // Datos de emisor y receptor
-                document.Add(new Paragraph($"{factura.NombreEmisor.ToUpper()} NÚMERO DE AUTORIZACIÓN:")
+                // Agregar contenido como párrafos dentro de la celda
+                headerCell.Add(new Paragraph($"{factura.NombreEmisor}                                                                              NÚMERO DE AUTORIZACIÓN: ")
                     .SetFont(font).SetFontSize(10));
-                document.Add(new Paragraph($"NIT Emisor: {factura.NitEmisor}    {factura.NumeroFactura}")
+
+                headerCell.Add(new Paragraph($"NIT Emisor: {factura.NitEmisor}                                                                         {factura.NumeroAutorizacion}")
                     .SetFont(font).SetFontSize(10));
-                document.Add(new Paragraph($"{factura.DireccionEmisor}")
+
+                headerCell.Add(new Paragraph($"{factura.DireccionEmisor}   Serie: {factura.Serie}  Número de DTE: {factura.NumeroFactura}")
                     .SetFont(font).SetFontSize(10));
-                document.Add(new Paragraph($"Serie: {factura.Serie}    Número de DTE: {factura.NumeroFactura}")
-                    .SetFont(font).SetFontSize(10));
-                document.Add(new Paragraph($"NIT Receptor: {factura.NitReceptor}    Fecha y hora de emisión: {factura.FechaEmision:dd-MMM-yyyy HH:mm:ss}")
-                    .SetFont(font).SetFontSize(10));
-                document.Add(new Paragraph($"Nombre Receptor: {factura.NombreReceptor}    Fecha y hora de certificación: {DateTime.Now:dd-MMM-yyyy HH:mm:ss}")
+
+                headerTable.AddCell(headerCell);
+                document.Add(headerTable);
+                document.Add(new Paragraph($"NIT Receptor: {factura.NitReceptor}                                                                     Fecha y hora de emisión: {factura.FechaEmision:dd-MMM-yyyy HH:mm:ss}")
+                   .SetFont(font).SetFontSize(10));
+                document.Add(new Paragraph($"Nombre Receptor: {factura.NombreReceptor}          Fecha y hora de certificación: {DateTime.Now:dd-MMM-yyyy HH:mm:ss}")
                     .SetFont(font).SetFontSize(10));
                 document.Add(new Paragraph($"Moneda: GTQ")
                     .SetFont(font).SetFontSize(10).SetMarginBottom(10));
-
                 // TABLA DE PRODUCTOS (Simula el documento estructurado SAT)
                 var table = new Table(new float[] { 1, 5, 3, 3, 3 }).UseAllAvailableWidth();
 

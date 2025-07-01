@@ -1,8 +1,9 @@
 ﻿function showError(message) {
     alert(message);
-    console.error(message);
+   
 }
-
+let consumidor = "";
+let electrcista = "";
 let detallesAbonados = [];
 let detallesAbono = [];
 $("#ConsumidorInput").on("input", function () {
@@ -63,9 +64,13 @@ $("#btnObtenerFacturas").on("click", function () {
             }
 
             data.forEach(d => {
+                electrcista = d.electrcista;
+                consumidor = d.consumidor;
                 tbody.append(`
                         <tr>
-                            <td>${d.deuda.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                         <td>${d.deuda.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                            <td>${d.electricista}</td>
+                            <td>${d.consumidor}</td>
                             <td>${new Date(d.fechaVenta).toLocaleDateString()}</td>
                             <td><button class="btn btn-primary btn-detalles" data-id="${d.idListado}">Ver detalles</button></td>
                              <td><input type="text" name="AbonoDeuda" class="AbonoDeuda" placeholder="Ingrese abono a deuda" /></td>
@@ -75,6 +80,7 @@ $("#btnObtenerFacturas").on("click", function () {
                     `);
             });
             actualizarTotalEnTabla();
+            $('#DeudasPendientes').hide();
             $("#DeudasContainer").show();
         })
         .fail(() => showError("Error al obtener las deudas."))
@@ -98,7 +104,6 @@ $("#DeudasTableBody").on("click", ".btn-Cancelar", function () {
         console.log(data)
         location.reload();
     }).fail(function (xhr) {
-        console.log(`error en ${xhr.responseText}`);
         alert(`hubo un error en ${xhr.responseText}`);
     });
 
@@ -110,9 +115,6 @@ $('#AbonosTableBody tr').each(function () {
     fila.find('<td>').each(function () {
         filaData.push($(this).text().trim());
     });
-    console.log(filaData);
-    console.log(filaData.length);
-    console.log(fila);
     detallesAbonados.push(filaData);
 });
 
@@ -132,11 +134,8 @@ $("#DeudasTableBody").on("click", ".btn-Cancelar", function () {
         type: "POST",
         data: { idListado, abonoo, idUsuario  },
     }).done(function (data) {
-        console.log(data)
-      //  alert(data.mensaje)
-       // location.reload();
+        alert("Abono realizado")
     }).fail(function (xhr) {
-        console.log(`error en ${xhr.responseText}`);
         alert(`hubo un error en ${xhr.responseText}`);
     });
 })
@@ -156,6 +155,7 @@ $("#DeudasTableBody").on("click", ".btn-detalles", function () {
     })
         .done(function (detalles) {
             const tbody = $("#DetallesTableBody");
+            $('#TituloDetalles').text(`Detalles de la Deuda de ${electrcista} y ${consumidor}`)
             tbody.empty();
             console.log(detalles);
             if (!detalles || detalles.length === 0) {
@@ -163,9 +163,9 @@ $("#DeudasTableBody").on("click", ".btn-detalles", function () {
                 $("#DetallesContainer").hide();
                 return;
             }
-            console.log("Detalles de deuda:", detalles.datos);
+           
             detallesAbono = Array.isArray(detalles) ? detalles : [];
-            console.log("Detalles de abono:", detallesAbono);
+
             detalles.forEach((d, index) => {
                 tbody.append(`
                         <tr>
@@ -185,7 +185,6 @@ $("#DeudasTableBody").on("click", ".btn-detalles", function () {
 });
 $("#DeudasTableBody").on("click", ".btn-AbonoDetalles", function () {
     const idListado = $(this).data("id")
-    console.log(`listado interno es ${idListado}`)
     if (!idListado) {
         showError("ID de deuda no válido.");
         console.log(`error en la id que es ${idListado}`)
@@ -197,7 +196,6 @@ $("#DeudasTableBody").on("click", ".btn-AbonoDetalles", function () {
         type: "GET",
         data: { idListado }
     }).done(function (response) {
-        console.log("Respuesta completa:", response);
         const tbody = $("#AbonosTableBody");
         tbody.empty();
 
@@ -205,7 +203,6 @@ $("#DeudasTableBody").on("click", ".btn-AbonoDetalles", function () {
 
         // 💾 Almacenar los datos en la variable global
         detallesAbono = Array.isArray(datos) ? datos : [];
-        console.log("Detalles de abono:", detallesAbono);
         if (detallesAbono.length === 0) {
             showError(response.mensaje);
         } else {
@@ -224,7 +221,6 @@ $("#DeudasTableBody").on("click", ".btn-AbonoDetalles", function () {
             $("#AbonosContainer").show();
 
             // Mostrar en consola para verificar
-            console.log("Abonos almacenados:", detallesAbono);
         }
     });
 
