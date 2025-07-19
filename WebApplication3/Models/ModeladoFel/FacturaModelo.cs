@@ -2,6 +2,7 @@
 {
     public class FacturaModelo
     {
+        public string NombreComercial { get; set; }
         public string NombreEmisor { get; set; }
         public string NitEmisor { get; set; }
         public string NumeroAutorizacion { get; set; }

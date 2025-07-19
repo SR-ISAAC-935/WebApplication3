@@ -34,10 +34,8 @@ public class DatosEmision
 {
     [XmlElement("DatosGenerales")]
     public DatosGenerales DatosGenerales { get; set; }
-
     [XmlElement("Emisor")]
     public Emisor Emisor { get; set; }
-
     [XmlElement("Receptor")]
     public ReceptorXML Receptor { get; set; }
 
@@ -67,7 +65,8 @@ public class Emisor
 {
     [XmlAttribute("NombreEmisor")]
     public string NombreEmisor { get; set; }
-
+    [XmlAttribute("NombreComercial")] // ✅ Este era el problema
+    public string NombreComercial { get; set; }
     [XmlAttribute("NITEmisor")]
     public string NITEmisor { get; set; }
 

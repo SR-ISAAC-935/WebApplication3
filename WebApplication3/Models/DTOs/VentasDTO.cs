@@ -8,9 +8,9 @@ namespace WebApplication3.Models.DTOs
         public int IdElectricista { get; set; }
         public string NombreConsumidor { get; set; }
         public string NombreElectricista { get; set; }
-        public required string nit { get; set; }
-        public required string direccion { get; set; }
-        public required string tax_name { get; set; }
+        public  string nit { get; set; } = null;
+        public  string direccion { get; set; } = null;
+        public  string tax_name { get; set; } = null;
         public int idrole { get; set; } // Nuevo campo para el rol del usuario
 
        // [Required(ErrorMessage = "El ID del consumidor es obligatorio.")]
@@ -24,7 +24,7 @@ namespace WebApplication3.Models.DTOs
 
 
        // [Required(ErrorMessage = "El ID del producto es obligatorio.")]
-        public int IdProducto { get; set; }
+        public int IdProducto { get; set; }=0;
 
         [Required(ErrorMessage = "La cantidad es obligatoria.")]
         [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser al menos 1.")]
@@ -33,6 +33,6 @@ namespace WebApplication3.Models.DTOs
         [Required(ErrorMessage = "El precio es obligatorio.")]
         [Range(0, double.MaxValue, ErrorMessage = "El precio debe ser un valor positivo.")]
         public decimal Precio { get; set; }
-        public required string ProductName { get; set; }
+        public  string ProductName { get; set; }
     }
 }

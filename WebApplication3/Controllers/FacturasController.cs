@@ -212,9 +212,9 @@ namespace WebApplication3.Controllers
                 Console.WriteLine(jsonBody);
 
                 using var client = new HttpClient();
-                var req = new HttpRequestMessage(HttpMethod.Post, "https://felplex.stage.plex.lat/api/entity/392/invoices/await");
+                var req = new HttpRequestMessage(HttpMethod.Post, "https://app.felplex.com/api/entity/5681/invoices/await");
                 req.Headers.Add("Accept", "application/json");
-                req.Headers.Add("X-Authorization", "YHuBX63N5F4uYQKwWXNjb7Mnw0PegrwyoiBFwo2wdUAbspYzk0fG4SOIVppuz5pk");
+                req.Headers.Add("X-Authorization", "LnSTDWslTbmJ0LdoQJCy4fSkXiEwKayI3T26Q9fnzolpjdbCooCfEJzktm538riI");
                 req.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
 
                 var response = await client.SendAsync(req);
@@ -300,10 +300,10 @@ namespace WebApplication3.Controllers
 
             var factura = new FacturaModelo
             {
-
+                NombreComercial = datosEmision.Emisor.NombreComercial,
                 NombreEmisor = datosEmision.Emisor.NombreEmisor,
                 NitEmisor = datosEmision.Emisor.NITEmisor,
-                DireccionEmisor = $"{datosEmision.Emisor.Direccion.Calle}, {datosEmision.Emisor.Direccion.Municipio}, {datosEmision.Emisor.Direccion.Departamento}",
+                DireccionEmisor = $"{datosEmision.Emisor.Direccion}, {datosEmision.Emisor.Direccion.Departamento}",
                 NombreReceptor = datosEmision.Receptor.Nombre,
                 NitReceptor = datosEmision.Receptor.NIT,
                 FechaEmision = datosEmision.DatosGenerales.FechaHoraEmision,
@@ -349,15 +349,14 @@ namespace WebApplication3.Controllers
                    .SetFontColor(new DeviceRgb(25, 63, 230));
 
                 // Agregar contenido como párrafos dentro de la celda
+
                 headerCell.Add(new Paragraph($"{factura.NombreEmisor}                                                                              NÚMERO DE AUTORIZACIÓN: ")
                     .SetFont(font).SetFontSize(10));
-
-                headerCell.Add(new Paragraph($"NIT Emisor: {factura.NitEmisor}                                                                         {factura.NumeroAutorizacion}")
+                headerCell.Add(new Paragraph($"NIT Emisor: {factura.NitEmisor}")
                     .SetFont(font).SetFontSize(10));
-
+                headerCell.Add(new Paragraph($"{factura.NombreComercial}                                                                                            Serie: {factura.Serie}  Número de DTE: {factura.NumeroFactura}"));
                 headerCell.Add(new Paragraph($"{factura.DireccionEmisor}   Serie: {factura.Serie}  Número de DTE: {factura.NumeroFactura}")
                     .SetFont(font).SetFontSize(10));
-
                 headerTable.AddCell(headerCell);
                 document.Add(headerTable);
                 document.Add(new Paragraph($"NIT Receptor: {factura.NitReceptor}                                                                     Fecha y hora de emisión: {factura.FechaEmision:dd-MMM-yyyy HH:mm:ss}")

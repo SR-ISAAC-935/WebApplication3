@@ -99,7 +99,7 @@ namespace WebApplication3.Controllers
 
             var productos = lumitecContext.Products
             .Where(c => c.ProductName.Contains(term))
-                .Select(c => new { idProducto = c.IdProduct, nombreProducto = c.ProductName, precioProducto = c.ProductPrices,ProductProvider=c.ProductProvider, stock= c.ProductStock })
+                .Select(c => new { idProducto = c.IdProduct, nombreProducto = c.ProductName, precioProducto = c.ProductPrices,ProductProvider=c.ProductProvider, stock= c.ProductStock, ProductBuyed=c.ProductBuyed })
                 .ToList();
             foreach(var i in  productos)
             {

@@ -16,6 +16,10 @@ namespace WebApplication3.Controllers
             _logger = logger;
             _context = lumitecContext;
         }
+        public async Task<IViewComponentResult> InvokeAsync()
+        {
+            return (IViewComponentResult)View("/Views/Partials/_ConsumidorPartials.cshtml");
+        }
         public IActionResult CrearConsumidor()
         {
            

@@ -3,7 +3,6 @@
         url: '/Consumidor/Roles',
         type: 'GET'
     }).done(function (data) {
-        console.log(data); // Asegúrate de que la respuesta tenga el formato correcto
         const rolSelect = $('#Rol');
         rolSelect.empty();
         rolSelect.append('<option value="">Seleccione un rol</option>');
@@ -12,5 +11,17 @@
         });
     });
 }
+$('#NewConsumer').on('click',function() {
 
+    const button = document.getElementById('NewConsumer');
+    const consumer = document.getElementById('Consumers');
+    (consumer.style.display == 'none') ? (consumer.style.setProperty('display', 'block'), (button.style.setProperty('display', 'none'))) : ("", "");
+})
+
+$('#hider').on('click' ,function () {    
+    const button = document.getElementById('NewConsumer');
+    const consumer = document.getElementById('Consumers');
+    (consumer.style.display == 'block') ? (consumer.style.setProperty('display', 'none'), (button.style.setProperty('display', 'block'))) : (button.style.setProperty('display', "none")), (button.style.setProperty('display', 'block'))
+
+})
 carajito();
