@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using iText.Commons.Actions.Contexts;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
 using WebApplication3.Controllers;
@@ -94,14 +95,23 @@ namespace WebApplication3.Custom
         public List<DeudaDTO> ObtenerDeudasPorConsumidor(int idConsumidor)
         {
             return (from l in _context.ListaNegras
+                    join c in _context.Consumidores
+                        on l.idComprador equals c.IdConsumidor
+                    join ele in _context.Consumidores
+                        on l.IdConsumidor equals ele.IdConsumidor
+                    where ele.IdRole == 1 // Electricista
+                    where c.IdRole == 2 // Consumidor
                     where l.IdConsumidor == idConsumidor
                     select new DeudaDTO
                     {
                         IdListado = l.IdListado,
+                        electricista = ele.NombreConsumidor,
+                        consumidor = c.NombreConsumidor,
                         Deuda = l.Deuda,
                         idEstado = l.IdEstado.ToString(),
                         FechaVenta = l.FechaVenta
                     }).ToList();
+
         }
 
         public List<DetalleDeudaDTO> ObtenerDetallesPorListado(int idListado)

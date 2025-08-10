@@ -19,4 +19,9 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Views\Partials\" />
+    <Folder Include="Views\Shared\Components\ConsumidorForm\" />
+  </ItemGroup>
+
 </Project>

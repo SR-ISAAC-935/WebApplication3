@@ -3,6 +3,11 @@ var registros = {};
 var tempIdProducto = null;
 var tempIdConsumidor = null;
 var tempIdElectricista = null;
+function tablaname() {
+    var tabla = $('#tablaRegistros');
+    console.log(tabla);
+
+}
 // Función para agregar un nuevo registro
 $('#agregarRegistro').on('click', function (e) {
     e.preventDefault();

@@ -7,6 +7,7 @@ public partial class ListaNegra
 {
     public int IdListado { get; set; }
 
+    public int idComprador { get; set; }
     public int IdConsumidor { get; set; }
 
     public decimal Deuda { get; set; }

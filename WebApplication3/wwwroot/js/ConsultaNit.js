@@ -125,15 +125,37 @@ $('form').on('submit', function (e) {
         contentType: 'application/json',
         data: JSON.stringify({ consumidoresJson, deudaTotal }),
         success: function (Datos) {
+            console.log('verificacion de mensajes',Datos)
             console.log(Datos.mensaje);
             console.log(Datos.pdf)
-            console.log(Datos.mensaje.pdf)
-            if (Datos && Datos.pdf) {
+            console.log(Datos.xml)
+            
+
+            if (Datos && Datos.xml) {
                 const link = document.getElementById('FEL');
                 link.style.display = 'inline-block';
                 link.textContent = 'Ver FEL';
-                link.href = Datos.pdf; // Redirige al PDF
-                link.target = '_blank'; // Abre en nueva pestaña
+
+                const af = `/Facturas/DescargarRecibo?xmlurl=${encodeURIComponent(Datos.xml)}`;
+
+                fetch(af)
+                    .then(response => {
+                        if (!response.ok) throw new Error('No se pudo obtener el PDF');
+                        return response.blob();
+                    })
+                    .then(blob => {
+                        const blobUrl = window.URL.createObjectURL(blob);
+                        const newTab = window.open(blobUrl, '_blank');
+                        if (newTab) {
+                            newTab.focus();
+                        } else {
+                            alert('Por favor, habilita los pop-ups para esta página.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al abrir el PDF:', error);
+                        alert('Ocurrió un error al mostrar la factura.');
+                    });
             } else {
                 const link = document.getElementById('FEL');
                 link.textContent = 'No hay FEL disponible';
@@ -141,6 +163,8 @@ $('form').on('submit', function (e) {
                 link.removeAttribute('target');
                 link.style.display = 'inline-block';
             }
+
+
         }
 ,
         error: function () {
